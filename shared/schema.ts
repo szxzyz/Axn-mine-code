@@ -37,7 +37,7 @@ export const users = pgTable("users", {
   lastName: text("last_name"),
   profileImageUrl: text("profile_image_url"),
   personalCode: text("personal_code"),
-  balance: decimal("balance", { precision: 20, scale: 0 }).default("0"), // Hrum stored as BIGINT
+  balance: decimal("balance", { precision: 20, scale: 0 }).default("0"), // AXN stored as BIGINT
   tonBalance: decimal("ton_balance", { precision: 30, scale: 10 }).default("0"),
   tonAppBalance: decimal("ton_app_balance", { precision: 30, scale: 10 }).default("0"),
   adsWatched: integer("ads_watched").default(0),
@@ -108,7 +108,7 @@ export const users = pgTable("users", {
   adSection2Count: integer("ad_section2_count").default(0),
   // Mining fields
   lastMiningClaim: timestamp("last_mining_claim").defaultNow(),
-  miningRate: decimal("mining_rate", { precision: 20, scale: 8 }).default("0.00001"), // Hrum per second
+  miningRate: decimal("mining_rate", { precision: 20, scale: 8 }).default("0.00001"), // AXN per second
   activePlanId: varchar("active_plan_id"),
   planExpiresAt: timestamp("plan_expires_at"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -173,7 +173,7 @@ export const promoCodes = pgTable("promo_codes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   code: varchar("code").notNull().unique(),
   rewardAmount: decimal("reward_amount", { precision: 30, scale: 10 }).notNull(),
-  rewardType: varchar("reward_type").default('Hrum').notNull(), // 'Hrum'
+  rewardType: varchar("reward_type").default('AXN').notNull(), // 'AXN'
   rewardCurrency: varchar("reward_currency").default(''),
   usageLimit: integer("usage_limit"),
   usageCount: integer("usage_count").default(0),
@@ -266,7 +266,7 @@ export const taskClicks = pgTable("task_clicks", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   taskId: varchar("task_id").references(() => advertiserTasks.id, { onDelete: 'cascade' }).notNull(),
   publisherId: varchar("publisher_id").references(() => users.id).notNull(),
-  rewardAmount: decimal("reward_amount", { precision: 30, scale: 10 }).default("0.0001750").notNull(), // 1750 Hrum = 0.000175 TON
+  rewardAmount: decimal("reward_amount", { precision: 30, scale: 10 }).default("0.0001750").notNull(), // 1750 AXN = 0.000175 TON
   clickedAt: timestamp("clicked_at").defaultNow(),
 }, (table) => [
   unique("task_clicks_unique").on(table.taskId, table.publisherId),
@@ -309,7 +309,7 @@ export const spinData = pgTable("spin_data", {
 export const spinHistory = pgTable("spin_history", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
-  rewardType: varchar("reward_type").notNull(), // 'Hrum' or ''
+  rewardType: varchar("reward_type").notNull(), // 'AXN' or ''
   rewardAmount: decimal("reward_amount", { precision: 30, scale: 10 }).notNull(),
   spinType: varchar("spin_type").notNull(), // 'free', 'ad', 'invite'
   createdAt: timestamp("created_at").defaultNow(),
