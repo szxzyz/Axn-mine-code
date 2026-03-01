@@ -380,8 +380,8 @@ function App() {
             <div className="absolute inset-0 rounded-full border border-white/10"></div>
             
             <img 
-              src="/images/hrum-logo.jpg" 
-              alt="Hrum" 
+              src="/images/axn-logo.jpg" 
+              alt="AXN" 
               className="w-full h-full object-cover rounded-full border-2 border-white/20 relative z-10 shadow-2xl"
             />
           </div>
@@ -389,7 +389,7 @@ function App() {
           {/* Text Elements */}
           <div className="text-center relative z-10">
             <h2 className="text-white font-black text-xl tracking-[0.2em] uppercase mb-2 animate-pulse">
-              Money Hrum
+              Money AXN
             </h2>
             <div className="flex items-center justify-center gap-2">
               <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce"></div>
