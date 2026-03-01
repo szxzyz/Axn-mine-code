@@ -18,7 +18,7 @@ declare global {
 }
 
 interface WalletSectionProps {
-  hrumBalance: number;
+  axnBalance: number;
   tonBalance: number;
   uid: string;
   isAdmin?: boolean;
@@ -26,7 +26,7 @@ interface WalletSectionProps {
   onWithdraw: () => void;
 }
 
-export default function WalletSection({ hrumBalance, tonBalance, uid, isAdmin, onAdminClick, onWithdraw }: WalletSectionProps) {
+export default function WalletSection({ axnBalance, tonBalance, uid, isAdmin, onAdminClick, onWithdraw }: WalletSectionProps) {
   const queryClient = useQueryClient();
   const [isShowingAds, setIsShowingAds] = useState(false);
   const [currentAdStep, setCurrentAdStep] = useState<'idle' | 'monetag' | 'adsgram' | 'converting'>('idle');
@@ -42,7 +42,7 @@ export default function WalletSection({ hrumBalance, tonBalance, uid, isAdmin, o
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ hrumAmount: amount }),
+        body: JSON.stringify({ axnAmount: amount }),
       });
 
       const data = await res.json();
@@ -103,10 +103,10 @@ export default function WalletSection({ hrumBalance, tonBalance, uid, isAdmin, o
   };
 
   const handleConvert = async () => {
-    const minimumConvertHrum = appSettings?.minimumConvertHrum || 10000;
+    const minimumConvertAXN = appSettings?.minimumConvertAXN || 10000;
     
-    if (hrumBalance < minimumConvertHrum) {
-      showNotification(`Minimum  {minimumConvertHrum.toLocaleString()} Hrum required.`, "error");
+    if (axnBalance < minimumConvertAXN) {
+      showNotification(`Minimum  {minimumConvertAXN.toLocaleString()} AXN required.`, "error");
       return;
     }
 
@@ -135,7 +135,7 @@ export default function WalletSection({ hrumBalance, tonBalance, uid, isAdmin, o
       if (monetagResult.unavailable) {
         // If Monetag unavailable, proceed with just AdsGram
         setCurrentAdStep('converting');
-        convertMutation.mutate(hrumBalance);
+        convertMutation.mutate(axnBalance);
         return;
       }
       
@@ -147,7 +147,7 @@ export default function WalletSection({ hrumBalance, tonBalance, uid, isAdmin, o
       }
       
       setCurrentAdStep('converting');
-      convertMutation.mutate(hrumBalance);
+      convertMutation.mutate(axnBalance);
       
     } catch (error) {
       console.error('Convert error:', error);
@@ -162,10 +162,10 @@ export default function WalletSection({ hrumBalance, tonBalance, uid, isAdmin, o
     <Card className="minimal-card mb-3">
       <CardContent className="pt-3 pb-3">
         <div className="flex items-center justify-between gap-3">
-          {/* Hrum Balance */}
+          {/* AXN Balance */}
           <div className="flex items-center gap-2">
             <DiamondIcon size={18} withGlow />
-            <div className="text-white font-bold text-xl">{Math.floor(hrumBalance).toLocaleString()} Hrum</div>
+            <div className="text-white font-bold text-xl">{Math.floor(axnBalance).toLocaleString()} AXN</div>
           </div>
 
           {/* Convert Button - Same size as Streak Claim button */}
