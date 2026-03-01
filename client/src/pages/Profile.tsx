@@ -90,22 +90,22 @@ export default function Profile() {
       content: (
         <div className="space-y-4 text-gray-400 text-sm">
           <p className="text-[#B9FF66] font-bold">Last Updated: January 21, 2026</p>
-          <p>Welcome to Money Hrum. By accessing or using this app, you agree to comply with these Terms & Conditions. If you do not agree, please do not use the app.</p>
+          <p>Welcome to Money AXN. By accessing or using this app, you agree to comply with these Terms & Conditions. If you do not agree, please do not use the app.</p>
           <div>
             <h4 className="text-white font-bold mb-1 italic uppercase tracking-tighter">1. Eligibility</h4>
             <p>Users must be at least 13 years old. You represent that you are of legal age to form a binding contract. You are responsible for maintaining the confidentiality of your account and all activities that occur under your account.</p>
           </div>
           <div>
-            <h4 className="text-white font-bold mb-1 italic uppercase tracking-tighter">2. HRUM Mining & Rewards</h4>
-            <p>Money Hrum is a free HRUM mining application. Users can mine HRUM tokens through free mining activities and boost their mining speed through optional investments. Mined HRUM is credited to your virtual balance and can be converted to TON for withdrawal.</p>
+            <h4 className="text-white font-bold mb-1 italic uppercase tracking-tighter">2. AXN Mining & Rewards</h4>
+            <p>Money AXN is a free AXN mining application. Users can mine AXN tokens through free mining activities and boost their mining speed through optional investments. Mined AXN is credited to your virtual balance and can be converted to TON for withdrawal.</p>
           </div>
           <div>
             <h4 className="text-white font-bold mb-1 italic uppercase tracking-tighter">3. Mining Boost & Investment</h4>
-            <p>Users can optionally invest TON to boost their mining speed. Mining boosts are time-limited and increase the rate at which HRUM is mined. Investment in mining boosts is voluntary and subject to the terms displayed at the time of purchase.</p>
+            <p>Users can optionally invest TON to boost their mining speed. Mining boosts are time-limited and increase the rate at which AXN is mined. Investment in mining boosts is voluntary and subject to the terms displayed at the time of purchase.</p>
           </div>
           <div>
             <h4 className="text-white font-bold mb-1 italic uppercase tracking-tighter">4. Withdrawals</h4>
-            <p>HRUM tokens can be converted to TON and withdrawn to your personal wallet. Withdrawals are subject to system verification, minimum limits, and available liquidity. Users must provide valid wallet addresses. We reserve the right to delay or cancel withdrawals for security audits or suspected fraudulent activity.</p>
+            <p>AXN tokens can be converted to TON and withdrawn to your personal wallet. Withdrawals are subject to system verification, minimum limits, and available liquidity. Users must provide valid wallet addresses. We reserve the right to delay or cancel withdrawals for security audits or suspected fraudulent activity.</p>
           </div>
           <div>
             <h4 className="text-white font-bold mb-1 italic uppercase tracking-tighter">5. Account Suspension & Bans</h4>
@@ -122,10 +122,10 @@ export default function Profile() {
       title: t('privacy_policy'),
       content: (
         <div className="space-y-4 text-gray-400 text-sm">
-          <p>Money Hrum respects your privacy and is committed to protecting your personal data.</p>
+          <p>Money AXN respects your privacy and is committed to protecting your personal data.</p>
           <div>
             <h4 className="text-white font-bold mb-1 italic uppercase tracking-tighter">1. Data Collection</h4>
-            <p>We collect essential data to provide our HRUM mining services, including your Telegram User ID (UID), device information (model, OS version), IP address, app usage statistics, and mining activity history.</p>
+            <p>We collect essential data to provide our AXN mining services, including your Telegram User ID (UID), device information (model, OS version), IP address, app usage statistics, and mining activity history.</p>
           </div>
           <div>
             <h4 className="text-white font-bold mb-1 italic uppercase tracking-tighter">2. Data Storage & Security</h4>
@@ -146,7 +146,7 @@ export default function Profile() {
       title: t('acceptable_use'),
       content: (
         <div className="space-y-4 text-gray-400 text-sm">
-          <p>To maintain a fair HRUM mining ecosystem for all users, you must adhere to the following rules:</p>
+          <p>To maintain a fair AXN mining ecosystem for all users, you must adhere to the following rules:</p>
           <div>
             <h4 className="text-rose-400 font-bold mb-1 flex items-center gap-2 italic uppercase tracking-tighter">
               Prohibited Actions
@@ -155,7 +155,7 @@ export default function Profile() {
               <li>Creating or managing multiple accounts for a single user.</li>
               <li>Using automated bots, scripts, or any third-party software to simulate mining activity.</li>
               <li>Exploiting technical vulnerabilities or bugs for unauthorized gain.</li>
-              <li>Attempting to manipulate the HRUM mining or conversion rates.</li>
+              <li>Attempting to manipulate the AXN mining or conversion rates.</li>
               <li>Reverse-engineering, decompiling, or attempting to extract source code from the app.</li>
             </ul>
           </div>

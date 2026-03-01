@@ -31,7 +31,7 @@ interface UnifiedTask {
   taskType: string;
   title: string;
   link: string | null;
-  rewardHrum: number;
+  rewardAXN: number;
   rewardBUG?: number;
   rewardType: string;
   isAdminTask: boolean;
@@ -190,7 +190,7 @@ export default function Home() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/mining/state"] });
-      showNotification(`+${Number(parseFloat(data.amount).toFixed(2)).toString()} Hrum claimed from mining!`, "success");
+      showNotification(`+${Number(parseFloat(data.amount).toFixed(2)).toString()} AXN claimed from mining!`, "success");
     },
     onError: (error: any) => {
       showNotification(error.message, "error");
@@ -273,7 +273,7 @@ export default function Home() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ hrumAmount: amount, convertTo }),
+        body: JSON.stringify({ axnAmount: amount, convertTo }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -317,8 +317,8 @@ export default function Home() {
       queryClient.invalidateQueries({ queryKey: ["/api/user/stats"] });
       const rewardAmount = parseFloat(data.rewardEarned || '0');
       if (rewardAmount > 0) {
-        const earnedHrum = Math.round(rewardAmount);
-        showNotification(`You've claimed +${earnedHrum} Hrum!`, "success");
+        const earnedAXN = Math.round(rewardAmount);
+        showNotification(`You've claimed +${earnedAXN} AXN!`, "success");
       } else {
         showNotification("You've claimed your streak bonus!", "success");
       }
@@ -432,8 +432,8 @@ export default function Home() {
       // Background refetch to keep data in sync
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
       queryClient.invalidateQueries({ queryKey: ['/api/tasks/home/unified'] });
-      const hrumReward = Number(data.reward ?? 0);
-      showNotification(`+${hrumReward.toLocaleString()} Hrum earned!`, 'success');
+      const axnReward = Number(data.reward ?? 0);
+      showNotification(`+${axnReward.toLocaleString()} AXN earned!`, 'success');
     },
     onError: (error: any) => {
       showNotification(error.message || 'Failed to claim reward', 'error');
@@ -526,7 +526,7 @@ export default function Home() {
     staleTime: 60000,
   });
 
-  const botUsername = import.meta.env.VITE_BOT_USERNAME || 'MoneyHrumbot';
+  const botUsername = import.meta.env.VITE_BOT_USERNAME || 'MoneyAXNbot';
   const referralLink = user?.referralCode 
     ? `https://t.me/${botUsername}?start=${user.referralCode}`
     : '';
@@ -613,7 +613,7 @@ export default function Home() {
       queryClient.invalidateQueries({ queryKey: ["/api/user/stats"] });
       queryClient.invalidateQueries({ queryKey: ["/api/earnings"] });
       
-      showNotification(`You received ${Math.round(data.rewardHrum || 1000)} Hrum on your balance`, "success");
+      showNotification(`You received ${Math.round(data.rewardAXN || 1000)} AXN on your balance`, "success");
       setLoadingProvider(null);
     },
     onError: (error: any) => {
@@ -695,9 +695,9 @@ export default function Home() {
                           <h3 className="text-white font-black text-sm uppercase tracking-tight mb-2 truncate">{task.title}</h3>
                           <div className="flex flex-wrap items-center gap-2">
                             <div className="flex items-center gap-1.5 bg-[#B9FF66]/10 px-2 py-1 rounded-lg border border-[#B9FF66]/10">
-                              <img src="/images/hrum-logo.jpg" alt="" className="w-3 h-3 rounded-full" />
+                              <img src="/images/axn-logo.jpg" alt="" className="w-3 h-3 rounded-full" />
                               <span className="text-[10px] font-black text-[#B9FF66] tracking-tighter">
-                                +{task.rewardHrum}
+                                +{task.rewardAXN}
                               </span>
                             </div>
                             <div className="flex items-center gap-1.5 bg-blue-500/10 px-2 py-1 rounded-lg border border-blue-500/10">
@@ -950,17 +950,17 @@ export default function Home() {
       return;
     }
 
-    const minimumConvertHrum = selectedConvertType === '' 
-      ? (appSettings?.minimumConvertHrum || 10000)
+    const minimumConvertAXN = selectedConvertType === '' 
+      ? (appSettings?.minimumConvertAXN || 10000)
       : (selectedConvertType === 'BUG' ? (appSettings?.minimumConvertPadToBug || 1000) : (appSettings?.minimumConvertPadToTon || 10000));
     
-    if (amount < minimumConvertHrum) {
-      showNotification(`Minimum ${minimumConvertHrum.toLocaleString()} Hrum required.`, "error");
+    if (amount < minimumConvertAXN) {
+      showNotification(`Minimum ${minimumConvertAXN.toLocaleString()} AXN required.`, "error");
       return;
     }
 
     if (padBalance < amount) {
-      showNotification("Insufficient Hrum balance", "error");
+      showNotification("Insufficient AXN balance", "error");
       return;
     }
 
@@ -1118,7 +1118,7 @@ export default function Home() {
         extraAdsWatchedToday: data.extraAdsWatchedToday
       }));
       
-      showNotification(`You received ${data.rewardHrum} Hrum for Extra Earn!`, "success");
+      showNotification(`You received ${data.rewardAXN} AXN for Extra Earn!`, "success");
     } catch (error: any) {
       console.error('Extra earn error:', error);
       showNotification(error.message || "Extra Earn ad failed", "error");
@@ -1250,7 +1250,7 @@ export default function Home() {
 
   const handleClaimClick = () => {
     if (miningAmount < 1) {
-      showNotification("Minimum claim is 1 HRUM", "error");
+      showNotification("Minimum claim is 1 AXN", "error");
       return;
     }
     claimMiningMutation.mutate();
@@ -1304,10 +1304,10 @@ export default function Home() {
 
           <div className="bg-[#141414] rounded-2xl px-4 py-2 flex justify-between items-center mb-4 border border-white/5 h-12">
             <div className="flex flex-col items-center flex-1">
-              <span className="text-[#8E8E93] text-[9px] font-semibold uppercase tracking-wider mb-0.5">{t('total_hrum_mined')}</span>
+              <span className="text-[#8E8E93] text-[9px] font-semibold uppercase tracking-wider mb-0.5">{t('total_axn_mined')}</span>
               <div className="flex items-center gap-1.5 leading-none">
                 <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
-                  <img src="/images/hrum-logo.jpg" alt="Hrum" className="w-full h-full object-cover rounded-sm" />
+                  <img src="/images/axn-logo.jpg" alt="AXN" className="w-full h-full object-cover rounded-sm" />
                 </div>
                 <span className="text-white text-base font-black tabular-nums">
                   {Math.floor(parseFloat(user?.balance || "0")).toLocaleString()}
@@ -1366,7 +1366,7 @@ export default function Home() {
                 </div>
                 
                 <div className="text-center mb-4">
-                  <div className="text-[#8E8E93] text-[9px] font-semibold uppercase tracking-wider mb-1">{t('mined_hrum')}</div>
+                  <div className="text-[#8E8E93] text-[9px] font-semibold uppercase tracking-wider mb-1">{t('mined_axn')}</div>
                   <div className="text-3xl font-black text-white tabular-nums tracking-tight">
                     {miningAmount.toFixed(6)}
                   </div>
@@ -1387,7 +1387,7 @@ export default function Home() {
                         <div key={boost.id} className="bg-white/5 rounded-xl p-3 border border-white/5 flex justify-between items-center">
                           <div className="space-y-0.5 text-left">
                             <div className="text-white text-[10px] font-black uppercase tracking-tight">Mining Boost</div>
-                            <div className="text-white text-[9px] font-bold">+{boost.miningRate} HRUM/h</div>
+                            <div className="text-white text-[9px] font-bold">+{boost.miningRate} AXN/h</div>
                           </div>
                           <div className="text-right">
                             <div className="text-[#8E8E93] text-[8px] font-black uppercase tracking-widest">Expires In</div>
@@ -1493,7 +1493,7 @@ export default function Home() {
                 {appSettings?.referralRewardEnabled && (
                   <div className="w-full p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl mb-0">
                     <p className="text-[10px] text-blue-400 font-black text-center uppercase tracking-tight italic">
-                      Bonus: {appSettings.referralRewardHrum || 50} Hrum + {appSettings.referralReward || 0.0005} TON on first ad!
+                      Bonus: {appSettings.referralRewardAXN || 50} AXN + {appSettings.referralReward || 0.0005} TON on first ad!
                     </p>
                   </div>
                 )}
@@ -1524,7 +1524,7 @@ export default function Home() {
                     <p className="text-white text-sm font-medium truncate">Share with Friends</p>
                   </div>
                   <div className="text-xs text-gray-400 ml-6">
-                    <p>Reward: <span className="text-white font-medium">{appSettings?.referralRewardHrum || '5'} Hrum</span></p>
+                    <p>Reward: <span className="text-white font-medium">{appSettings?.referralRewardAXN || '5'} AXN</span></p>
                   </div>
                 </div>
                 <div className="ml-3 flex-shrink-0">
@@ -1559,7 +1559,7 @@ export default function Home() {
                     <p className="text-white text-sm font-medium truncate">Daily Check-in</p>
                   </div>
                   <div className="text-xs text-gray-400 ml-6">
-                    <p>Reward: <span className="text-white font-medium">{appSettings?.dailyCheckinReward || '5'} Hrum</span></p>
+                    <p>Reward: <span className="text-white font-medium">{appSettings?.dailyCheckinReward || '5'} AXN</span></p>
                   </div>
                 </div>
                 <div className="ml-3 flex-shrink-0">
@@ -1600,7 +1600,7 @@ export default function Home() {
                     <p className="text-white text-sm font-medium truncate">Check for Updates</p>
                   </div>
                   <div className="text-xs text-gray-400 ml-6">
-                    <p>Reward: <span className="text-white font-medium">{appSettings?.checkForUpdatesReward || '5'} Hrum</span></p>
+                    <p>Reward: <span className="text-white font-medium">{appSettings?.checkForUpdatesReward || '5'} AXN</span></p>
                   </div>
                 </div>
                 <div className="ml-3 flex-shrink-0">
@@ -1717,14 +1717,14 @@ export default function Home() {
             className="bg-[#0d0d0d] rounded-[24px] p-6 w-full max-w-[320px] border border-white/5 relative shadow-2xl overflow-hidden"
           >
             <div className="relative z-10 pt-2">
-              <h2 className="text-xl font-black text-white text-center mb-1 uppercase tracking-tight">Exchange Hrum for TON</h2>
+              <h2 className="text-xl font-black text-white text-center mb-1 uppercase tracking-tight">Exchange AXN for TON</h2>
               <p className="text-[11px] text-zinc-400 text-center mb-4 font-bold leading-relaxed px-1">
-                Convert your earned Hrum into TON cryptocurrency instantly.
+                Convert your earned AXN into TON cryptocurrency instantly.
               </p>
 
               <div className="space-y-3">
                 <div className="space-y-1.5">
-                  <Label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Amount (Hrum):</Label>
+                  <Label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Amount (AXN):</Label>
                   <div className="relative">
                     <Input
                       type="number"
@@ -1736,8 +1736,8 @@ export default function Home() {
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
                       <div className="w-6 h-6 rounded-full overflow-hidden border border-white/10">
                         <img 
-                          src="/images/hrum-logo.jpg" 
-                          alt="Hrum" 
+                          src="/images/axn-logo.jpg" 
+                          alt="AXN" 
                           className="w-full h-full object-cover scale-150"
                         />
                       </div>
@@ -1788,7 +1788,7 @@ export default function Home() {
 
                 <div className="pt-3 border-t border-white/5 mt-1">
                   <p className="text-[9px] text-zinc-500 text-center mb-2 font-black uppercase tracking-wider opacity-60">
-                    Rate: 10,000 Hrum = 1 TON
+                    Rate: 10,000 AXN = 1 TON
                   </p>
                   <Button
                     variant="outline"
