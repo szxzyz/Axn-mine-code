@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import Layout from "@/components/Layout";
-import AdWatchingSection from "@/components/AdWatchingSection";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -21,8 +20,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import WithdrawalPopup from "@/components/WithdrawalPopup";
 
-import UpgradePopup from "@/components/UpgradePopup";
-import { FAQSection } from "@/components/FAQSection";
 
 // Unified Task Interface
 interface UnifiedTask {
@@ -76,7 +73,6 @@ export default function Home() {
   const [convertPopupOpen, setConvertPopupOpen] = useState(false);
   const [boosterPopupOpen, setBoosterPopupOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [selectedConvertType, setSelectedConvertType] = useState<'' | 'BUG'>('');
   const [convertAmount, setConvertAmount] = useState<string>("");
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
   
@@ -1789,12 +1785,6 @@ export default function Home() {
         tonBalance={withdrawBalance}
       />
 
-      <UpgradePopup 
-        isOpen={upgradePopupOpen} 
-        onClose={() => setUpgradePopupOpen(false)} 
-        tonAppBalance={user?.tonAppBalance || "0"} 
-      />
-      <FAQSection />
     </Layout>
   );
 }
