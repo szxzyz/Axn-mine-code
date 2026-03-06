@@ -19,7 +19,8 @@ function Router() {
       </div>
     }>
       <Switch>
-        <Route path="/" component={Home} />
+        <Route path="/" component={Profile} />
+        <Route path="/home" component={Home} />
         <Route path="/profile" component={Profile} />
         <Route path="/admin" component={Admin} />
         <Route component={NotFound} />
