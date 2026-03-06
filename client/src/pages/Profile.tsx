@@ -167,70 +167,9 @@ export default function Profile() {
 
   return (
     <Layout>
-      <main className="max-w-md mx-auto px-4 pt-4 pb-24 overflow-y-auto bg-[#050505]">
+      <main className="max-w-md mx-auto px-4 pt-20 pb-24 overflow-y-auto bg-[#050505]">
         
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] border-2 border-[#B9FF66]/30 flex items-center justify-center overflow-hidden shadow-lg shadow-[#B9FF66]/10">
-              {photoUrl ? (
-                <img 
-                  src={photoUrl} 
-                  alt="Profile" 
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-[#B9FF66] to-[#80B542] flex items-center justify-center text-black font-black text-xl">
-                  {(user as any)?.firstName?.[0] || 'U'}
-                </div>
-              )}
-            </div>
-            <div className="flex flex-col">
-              <span className="text-white font-black text-lg leading-none tracking-tight">
-                {(user as any)?.firstName || (user as any)?.username || 'User'}
-              </span>
-              <span className="text-[#B9FF66] text-[10px] font-black uppercase tracking-widest mt-1 opacity-90">
-                ID: {uid}
-              </span>
-            </div>
-          </div>
-          
-          <button 
-            onClick={copyUid}
-            className="bg-[#1a1a1a] p-2.5 rounded-xl border border-white/5 hover:bg-white/5 transition-all active:scale-95"
-          >
-            {copied ? <Check className="w-4 h-4 text-[#B9FF66]" /> : <Copy className="w-4 h-4 text-gray-400" />}
-          </button>
-        </div>
-
         <div className="bg-[#141414] rounded-2xl p-4 border border-white/5 mb-4">
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <div className="bg-[#0d0d0d] rounded-xl p-4 border border-white/5">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 rounded-full bg-[#1a1a1a] border border-white/10 flex items-center justify-center">
-                  <img src="/images/ton.png" alt="TON" className="w-4 h-4 object-cover rounded-full" />
-                </div>
-                <span className="text-[#8E8E93] text-[8px] font-black uppercase tracking-widest">App Balance</span>
-              </div>
-              <p className="text-2xl font-black text-white leading-none tabular-nums">
-                {tonAppBalance.toFixed(3)}
-              </p>
-              <p className="text-[#B9FF66] text-[9px] font-bold uppercase tracking-wider mt-1">TON</p>
-            </div>
-
-            <div className="bg-[#0d0d0d] rounded-xl p-4 border border-white/5">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 rounded-full bg-[#1a1a1a] border border-white/10 flex items-center justify-center">
-                  <img src="/images/ton.png" alt="TON" className="w-4 h-4 object-cover rounded-full" />
-                </div>
-                <span className="text-[#8E8E93] text-[8px] font-black uppercase tracking-widest">Withdraw</span>
-              </div>
-              <p className="text-2xl font-black text-white leading-none tabular-nums">
-                {tonWithdrawBalance.toFixed(3)}
-              </p>
-              <p className="text-blue-400 text-[9px] font-bold uppercase tracking-wider mt-1">TON</p>
-            </div>
-          </div>
-
           <div className="grid grid-cols-2 gap-3">
             <Button 
               onClick={() => setIsTopUpOpen(true)}

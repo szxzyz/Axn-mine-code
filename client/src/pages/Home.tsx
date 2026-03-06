@@ -84,8 +84,6 @@ export default function Home() {
   const [timeUntilNextClaim, setTimeUntilNextClaim] = useState<string>("");
   const [isConverting, setIsConverting] = useState(false);
   
-  const padBalance = parseFloat((user as User)?.balance || "0");
-
   const { runAdFlow } = useAdFlow();
 
   const { data: leaderboardData } = useQuery<{
@@ -1226,20 +1224,6 @@ export default function Home() {
                 </span>
               </div>
             </div>
-            <div className="w-[1px] h-6 bg-white/10 mx-1"></div>
-            <div className="flex flex-col items-center flex-1">
-              <div className="flex items-center gap-1 mb-0.5 leading-none">
-                <span className="text-[#8E8E93] text-[9px] font-semibold uppercase tracking-wider">{t('ton_balance')}</span>
-              </div>
-              <div className="flex items-center gap-1.5 leading-none">
-                <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
-                  <img src="/images/ton.png" alt="TON" className="w-full h-full object-cover rounded-full" />
-                </div>
-                <span className="text-white text-base font-black tabular-nums">
-                  {user?.tonBalance ? parseFloat(user.tonBalance).toFixed(3) : "0.000"}
-                </span>
-              </div>
-            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3 mb-4">
@@ -1558,7 +1542,6 @@ export default function Home() {
                     </div>
                   </div>
                   <div className="flex justify-between items-center px-1">
-                    <span className="text-[9px] font-bold text-zinc-600 uppercase">Bal: {parseFloat((user as User)?.balance || '0').toLocaleString()}</span>
                     <button 
                       onClick={() => setConvertAmount((user as User)?.balance || '0')}
                       className="text-[9px] font-black text-blue-500 uppercase hover:text-blue-400"
