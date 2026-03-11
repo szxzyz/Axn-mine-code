@@ -3,7 +3,6 @@ import { useWebSocket } from "@/hooks/useWebSocket";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useLanguage } from "@/hooks/useLanguage";
 import { motion, AnimatePresence } from "framer-motion";
-import Header from "./Header";
 
 const CustomHomeIcon = ({ className, isActive }: { className?: string, isActive?: boolean }) => (
   <svg 
@@ -114,7 +113,7 @@ export default function Layout({ children }: LayoutProps) {
   const { t } = useLanguage();
 
   const navItems = [
-    { href: "/home", icon: CustomHomeIcon, label: t('home') },
+    { href: "/", icon: CustomHomeIcon, label: t('home') },
     { href: "/profile", icon: CustomMenuIcon, label: t('menu') },
   ];
 
@@ -122,7 +121,6 @@ export default function Layout({ children }: LayoutProps) {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] pb-4 text-foreground font-sans selection:bg-[#4cd3ff]/30 relative overflow-hidden">
-      <Header />
       <div className="fixed inset-0 bg-gradient-to-b from-blue-500/5 via-transparent to-transparent pointer-events-none" />
       {/* Page Content with Transition */}
       <AnimatePresence mode="wait">

@@ -23,7 +23,6 @@ export default function Header() {
 
   const tonBalance = parseFloat(user?.tonBalance || "0");
   const hrumBalance = parseFloat(user?.balance || "0");
-  const tonAppBalance = parseFloat(user?.tonAppBalance || "0");
 
   const formatBalance = (balance: number) => {
     if (balance >= 1000000) {
@@ -34,40 +33,61 @@ export default function Header() {
     return Math.round(balance).toLocaleString();
   };
 
+  const telegramPhotoUrl = typeof window !== 'undefined' && (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.photo_url;
+  const photoUrl = telegramPhotoUrl || user?.profileImageUrl || user?.profileUrl || null;
+
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-black/95 pt-[max(env(safe-area-inset-top),10px)]">
-      <div className="max-w-md mx-auto px-4 py-2">
-        <div className="bg-[#141414] rounded-2xl p-1.5 flex items-center justify-between border border-white/5">
-          {/* AXN Balance */}
-          <div className="flex-1 flex flex-col items-center justify-center py-2 border-r border-white/5">
-            <div className="flex items-center gap-1.5 mb-0.5">
-              <img src="/images/hrum-logo.jpg" alt="AXN" className="w-3.5 h-3.5 rounded-full" />
-              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">AXN</span>
-            </div>
-            <span className="text-sm text-white font-black tabular-nums">
+    <div className="fixed top-0 left-0 right-0 z-40 bg-black/95 border-b border-white/5 pt-[max(env(safe-area-inset-top),20px)]">
+      <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          {/* Profile Photo */}
+          <div 
+            className={`w-8 h-8 rounded-full overflow-hidden flex items-center justify-center border border-white/10 bg-[#1a1a1a] ${isAdmin ? 'cursor-pointer hover:opacity-80' : ''}`}
+            onClick={() => setLocation("/profile")}
+          >
+            {photoUrl ? (
+              <img 
+                src={photoUrl} 
+                alt="Profile" 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <UserIcon className="w-4 h-4 text-[#D1D5DB]" />
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 bg-[#1a1a1a] px-3 h-8 rounded-lg border border-white/5 min-w-[75px] shadow-sm">
+            <span className="text-sm text-white font-bold tracking-tight">
               {formatBalance(hrumBalance)}
             </span>
+            <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
+              <img 
+                src="/images/hrum-logo.jpg" 
+                alt="Hrum" 
+                className="w-full h-full object-cover rounded-sm"
+              />
+            </div>
           </div>
 
-          {/* TON Balance */}
-          <div className="flex-1 flex flex-col items-center justify-center py-2 border-r border-white/5">
-            <div className="flex items-center gap-1.5 mb-0.5">
-              <img src="/images/ton.png" alt="TON" className="w-3.5 h-3.5 rounded-full" />
-              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">TON</span>
-            </div>
-            <span className="text-sm text-white font-black tabular-nums">
+          <div className="flex items-center gap-2 bg-[#1a1a1a] px-3 h-8 rounded-lg border border-white/5 min-w-[75px] shadow-sm">
+            <span className="text-sm text-white font-bold tracking-tight">
               {tonBalance.toFixed(2)}
             </span>
-          </div>
-
-          {/* App TON Balance */}
-          <div className="flex-1 flex flex-col items-center justify-center py-2">
-            <div className="flex items-center gap-1.5 mb-0.5">
-              <img src="/images/ton.png" alt="APP" className="w-3.5 h-3.5 rounded-full" />
-              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">APP TON</span>
+            <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
+              <img 
+                src="/images/ton.png" 
+                alt="TON" 
+                className="w-full h-full object-cover rounded-full"
+              />
             </div>
-            <span className="text-sm text-[#B9FF66] font-black tabular-nums">
-              {tonAppBalance.toFixed(2)}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="bg-[#1a1a1a] px-3 h-8 rounded-lg border border-white/5 flex items-center justify-center shadow-sm">
+            <span className="text-[10px] text-white/50 font-bold uppercase tracking-wider mr-1.5">PLAN:</span>
+            <span className={`text-xs font-bold uppercase tracking-widest ${user?.planStatus === 'Premium' ? 'text-yellow-400' : 'text-blue-400'}`}>
+              {user?.planStatus || 'Trial'}
             </span>
           </div>
         </div>
