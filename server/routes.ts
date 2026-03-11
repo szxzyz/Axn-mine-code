@@ -335,6 +335,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
   
+  app.get("/api/auth/user", authenticateTelegram, async (req: any, res) => {
+    try {
+      const user = req.user?.user;
+      if (!user) return res.status(401).json({ message: "Not authenticated" });
+      
+      const hasBoughtBoost = await storage.hasEverBoughtBoost(user.id);
+      res.json({ 
+        ...user, 
+        planStatus: hasBoughtBoost ? 'Premium' : 'Trial' 
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
 
   app.get("/api/admin/settings", authenticateAdmin, async (req, res) => {
     try {
@@ -501,6 +515,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Production health check endpoint - checks database connectivity and user count
+  app.post("/api/mining/upgrade", authenticateTelegram, async (req: any, res) => {
+    try {
+      const user = req.user?.user;
+      if (!user) return res.status(401).json({ message: "Not authenticated" });
+
+      const { tonAmount } = req.body;
+      const amount = parseFloat(tonAmount);
+      if (isNaN(amount) || amount <= 0) {
+        return res.status(400).json({ message: "Invalid amount" });
+      }
+
+      // Check TON (App Balance)
+      const tonAppBalance = parseFloat(user.tonAppBalance || "0");
+      if (tonAppBalance < amount) {
+        return res.status(400).json({ message: "Insufficient TON (App Balance). Top up or use a promo code." });
+      }
+
+      await db.transaction(async (tx) => {
+        const now = new Date();
+        const durationDays = 30;
+        const expiresAt = new Date(now.getTime() + durationDays * 24 * 60 * 60 * 1000);
+        
+        // 1 TON = 10,000 AXN conversion logic for profit
+        // Daily profit = investment * 0.1 (10% daily base for example)
+        const dailyAXNProfit = amount * 1000; // 0.1 TON = 100 AXN/day as per example
+        const newMiningRate = dailyAXNProfit / (24 * 3600);
+
+        // Record the new boost
+        await tx.insert(miningBoosts).values({
+          userId: user.id,
+          planId: `custom_${amount}_${now.getTime()}`,
+          miningRate: newMiningRate.toFixed(8),
+          expiresAt: expiresAt,
+        });
+
+        // Deduct balance
+        await tx.update(users)
+          .set({ 
+            tonAppBalance: (tonAppBalance - amount).toString(),
+            updatedAt: now
+          })
+          .where(eq(users.id, user.id));
+
+        await tx.insert(transactions).values({
+          userId: user.id,
+          amount: amount.toString(),
+          type: "deduction",
+          source: "mining_boost_purchase",
+          description: `Invested ${amount} TON for mining boost`,
+          metadata: { tonAmount: amount, durationDays }
+        });
+      });
+
+      res.json({ success: true, message: "Mining boost activated successfully" });
+    } catch (error) {
+      console.error("Error upgrading mining:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
 
   app.post("/api/ads/watch", authenticateTelegram, async (req: any, res) => {
     try {
@@ -1317,6 +1391,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Auth routes
+  app.get('/api/auth/user', authenticateTelegram, async (req: any, res) => {
+    try {
+      const userId = req.user.user.id; // Use the database UUID, not Telegram ID
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Ensure referralCode exists
+      if (!user.referralCode) {
+        await storage.generateReferralCode(userId);
+        const updatedUser = await storage.getUser(userId);
+        user.referralCode = updatedUser?.referralCode || '';
+      }
+      
+      // Ensure friendsInvited is properly calculated from COMPLETED referrals only
+      // Pending referrals (where friend hasn't watched their first ad) don't count
+      // Also exclude banned users from referral count
+      const actualReferralsCount = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(referrals)
+        .innerJoin(users, eq(referrals.refereeId, users.id))
+        .where(and(
+          eq(referrals.referrerId, userId),
+          eq(referrals.status, 'completed'),
+          eq(users.banned, false)
+        ));
+      
+      const friendsInvited = actualReferralsCount[0]?.count || 0;
+      
+      // Update DB if count is different (sync)
+      if (user.friendsInvited !== friendsInvited) {
+        await db
+          .update(users)
+          .set({ friendsInvited: friendsInvited })
+          .where(eq(users.id, userId));
+      }
+      
+      // Add referral link with fallback bot username - use /start flow for reliable referral tracking
+      const botUsername = process.env.BOT_USERNAME || "MoneyAXNbot";
+      const referralLink = `https://t.me/${botUsername}?start=${user.referralCode}`;
+      
+      res.json({
+        ...user,
+        friendsInvited,
+        referralLink
+      });
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
 
   // Balance refresh endpoint - used after conversion to sync frontend
   app.get('/api/user/balance/refresh', async (req: any, res) => {
