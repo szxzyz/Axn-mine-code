@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import Layout from "@/components/Layout";
+import AdWatchingSection from "@/components/AdWatchingSection";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -8,7 +9,7 @@ import { useAdFlow } from "@/hooks/useAdFlow";
 import { useLocation } from "wouter";
 import { SettingsPopup } from "@/components/SettingsPopup";
 import { useLanguage } from "@/hooks/useLanguage";
-import { Award, Wallet, RefreshCw, Flame, Ticket, Info, User as UserIcon, Clock, Loader2, Gift, Rocket, X, Bug, DollarSign, Coins, Send, Users, Check, ExternalLink, Plus, CalendarCheck, Bell, Star, Play, Sparkles, Zap, Settings, Film, Tv, Target, ClipboardList, UserPlus, Share2, Copy, HeartHandshake, HandCoins, LogOut, Trophy, Download, Crown, ShieldCheck } from "lucide-react";
+import { Award, Wallet, RefreshCw, Flame, Ticket, Info, User as UserIcon, Clock, Loader2, Gift, Rocket, X, Bug, DollarSign, Coins, Send, Users, Check, ExternalLink, Plus, CalendarCheck, Bell, Star, Play, Sparkles, Zap, Settings, Film, Tv, Target, LayoutDashboard, ClipboardList, UserPlus, Share2, Copy, HeartHandshake, ArrowUpCircle, HandCoins, LogOut, Trophy, Download, Crown, ShieldCheck } from "lucide-react";
 import { DiamondIcon } from "@/components/DiamondIcon";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,6 +21,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import WithdrawalPopup from "@/components/WithdrawalPopup";
 
+import UpgradePopup from "@/components/UpgradePopup";
+import { FAQSection } from "@/components/FAQSection";
 
 // Unified Task Interface
 interface UnifiedTask {
@@ -72,7 +75,9 @@ export default function Home() {
   const [withdrawPopupOpen, setWithdrawPopupOpen] = useState(false);
   const [convertPopupOpen, setConvertPopupOpen] = useState(false);
   const [boosterPopupOpen, setBoosterPopupOpen] = useState(false);
+  const [upgradePopupOpen, setUpgradePopupOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [selectedConvertType, setSelectedConvertType] = useState<'' | 'BUG'>('');
   const [convertAmount, setConvertAmount] = useState<string>("");
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
   
@@ -1282,12 +1287,18 @@ export default function Home() {
                   {(user as User)?.firstName || (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.first_name || "User"}
                 </span>
                 <span className="text-[#B9FF66] text-[10px] font-black uppercase tracking-widest mt-1 opacity-90">
-                  AXN EARNER
+                  ID: {(user as User)?.id?.substring(0, 8) || "N/A"}
                 </span>
               </div>
             </div>
             
             <div className="flex items-center gap-2">
+              <div className="bg-[#1a1a1a] px-3 h-10 rounded-xl border border-white/5 flex items-center justify-center shadow-sm">
+                <span className="text-[10px] text-white/50 font-black uppercase tracking-widest mr-2">Plan:</span>
+                <span className={`text-[11px] font-black uppercase tracking-widest ${user?.planStatus === 'Premium' ? 'text-[#B9FF66]' : 'text-blue-400'}`}>
+                  {user?.planStatus || 'Trial'}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -1320,13 +1331,20 @@ export default function Home() {
           </div>
 
           <Tabs defaultValue="mine" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 bg-[#0d0d0d] border border-white/5 h-12 p-1 rounded-xl mb-4 shadow-inner">
+            <TabsList className="grid w-full grid-cols-3 bg-[#0d0d0d] border border-white/5 h-12 p-1 rounded-xl mb-4 shadow-inner">
               <TabsTrigger 
                 value="mine" 
                 className="flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-wider rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:text-white/40 transition-all h-full"
               >
                 <Zap className="w-3.5 h-3.5" />
                 {t('mine').toUpperCase()}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="earn" 
+                className="flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-wider rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:text-white/40 transition-all h-full"
+              >
+                <LayoutDashboard className="w-3.5 h-3.5" />
+                {t('earn').toUpperCase()}
               </TabsTrigger>
               <TabsTrigger 
                 value="referrals" 
@@ -1383,7 +1401,14 @@ export default function Home() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 gap-3 mb-4">
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <Button 
+                    onClick={() => setUpgradePopupOpen(true)}
+                    className="w-full h-11 bg-white hover:bg-zinc-200 text-black rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-white/5"
+                  >
+                    <ArrowUpCircle className="w-3.5 h-3.5" />
+                    {t('upgrade')}
+                  </Button>
                   <Button 
                     onClick={handleClaimClick}
                     disabled={claimMiningMutation.isPending}
@@ -1421,6 +1446,12 @@ export default function Home() {
               </div>
             </TabsContent>
 
+            <TabsContent value="earn" className="mt-0 outline-none">
+              <div className="space-y-4 pt-1">
+                <AdWatchingSection user={user as User} section="section1" />
+                <AdWatchingSection user={user as User} section="section2" />
+              </div>
+            </TabsContent>
 
             <TabsContent value="referrals" className="mt-0 outline-none">
               <div className="flex flex-col items-center text-center pt-2">
@@ -1785,6 +1816,12 @@ export default function Home() {
         tonBalance={withdrawBalance}
       />
 
+      <UpgradePopup 
+        isOpen={upgradePopupOpen} 
+        onClose={() => setUpgradePopupOpen(false)} 
+        tonAppBalance={user?.tonAppBalance || "0"} 
+      />
+      <FAQSection />
     </Layout>
   );
 }
