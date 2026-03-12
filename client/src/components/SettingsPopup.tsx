@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Copy, Globe, MessageSquare, ShieldCheck, FileText, ExternalLink, Check, ChevronRight, RefreshCw } from 'lucide-react';
+import { X, Copy, MessageSquare, ShieldCheck, FileText, ExternalLink, Check, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -11,7 +11,7 @@ interface SettingsPopupProps {
 
 export const SettingsPopup: React.FC<SettingsPopupProps> = ({ onClose }) => {
   const { user } = useAuth();
-  const { language, setLanguage, t } = useLanguage();
+  const { t } = useLanguage();
   const [copied, setCopied] = React.useState(false);
 
   const [selectedLegal, setSelectedLegal] = React.useState<string | null>(null);
@@ -129,10 +129,6 @@ export const SettingsPopup: React.FC<SettingsPopupProps> = ({ onClose }) => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const toggleLanguage = () => {
-    setLanguage(language === 'en' ? 'ru' : 'en');
-  };
-
   const openLink = (url: string) => {
     if (window.Telegram?.WebApp?.openTelegramLink) {
       window.Telegram.WebApp.openTelegramLink(url);
@@ -154,13 +150,6 @@ export const SettingsPopup: React.FC<SettingsPopupProps> = ({ onClose }) => {
               rightIcon={copied ? <Check className="w-3 h-3 text-green-500" /> : <ChevronRight className="w-3 h-3 text-gray-600" />}
             />
 
-            {/* Language */}
-            <LegalItem 
-              icon={<Globe className="w-4 h-4 text-purple-400" />} 
-              label={`${t('language')}: ${language === 'en' ? t('english') : t('russian')}`} 
-              onClick={toggleLanguage}
-              rightIcon={<RefreshCw className="w-3 h-3 text-gray-600" />}
-            />
 
             {/* Admin Panel (Conditional) */}
             {(user as any)?.isAdmin && (
