@@ -148,91 +148,103 @@ export default function Profile() {
 
   return (
     <Layout>
-      <main className="max-w-md mx-auto px-4 pt-4 pb-24 overflow-y-auto bg-[#050505]">
+      <main className="max-w-md mx-auto px-4 pt-6 pb-24 overflow-y-auto bg-[#050505]">
         
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] border-2 border-[#B9FF66]/30 flex items-center justify-center overflow-hidden shadow-lg shadow-[#B9FF66]/10">
-              {photoUrl ? (
-                <img 
-                  src={photoUrl} 
-                  alt="Profile" 
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-[#B9FF66] to-[#80B542] flex items-center justify-center text-black font-black text-xl">
-                  {(user as any)?.firstName?.[0] || 'U'}
-                </div>
-              )}
-            </div>
-            <div className="flex flex-col">
-              <span className="text-white font-black text-lg leading-none tracking-tight">
-                {(user as any)?.firstName || (user as any)?.username || 'User'}
-              </span>
-              <span className="text-[#B9FF66] text-[10px] font-black uppercase tracking-widest mt-1 opacity-90">
-                ID: {uid}
-              </span>
-            </div>
+        {/* Centered Profile Hero Section */}
+        <div className="flex flex-col items-center mb-6">
+          {/* Large centered profile photo */}
+          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] border-2 border-[#B9FF66]/40 flex items-center justify-center overflow-hidden shadow-xl shadow-[#B9FF66]/10 mb-3">
+            {photoUrl ? (
+              <img 
+                src={photoUrl} 
+                alt="Profile" 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-[#B9FF66] to-[#80B542] flex items-center justify-center text-black font-black text-3xl">
+                {(user as any)?.firstName?.[0] || 'U'}
+              </div>
+            )}
           </div>
-          
-          <button 
-            onClick={copyUid}
-            className="bg-[#1a1a1a] p-2.5 rounded-xl border border-white/5 hover:bg-white/5 transition-all active:scale-95"
-          >
-            {copied ? <Check className="w-4 h-4 text-[#B9FF66]" /> : <Copy className="w-4 h-4 text-gray-400" />}
-          </button>
+
+          {/* User Name */}
+          <span className="text-white font-black text-xl leading-none tracking-tight mb-1">
+            {(user as any)?.firstName || (user as any)?.username || 'User'}
+          </span>
+
+          {/* User ID with copy button */}
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-[#8E8E93] text-xs font-semibold">
+              ID: <span className="text-[#B9FF66] font-black">{uid}</span>
+            </span>
+            <button 
+              onClick={copyUid}
+              className="bg-[#1a1a1a] p-1.5 rounded-lg border border-white/5 hover:bg-white/5 transition-all active:scale-95"
+            >
+              {copied ? <Check className="w-3 h-3 text-[#B9FF66]" /> : <Copy className="w-3 h-3 text-gray-400" />}
+            </button>
+          </div>
         </div>
 
-        <div className="bg-[#141414] rounded-2xl p-4 border border-white/5 mb-4">
-          <button 
-            onClick={() => setIsTransactionsOpen(true)}
-            className="w-full flex items-center justify-between hover:bg-white/[0.02] transition-all rounded-xl p-2 -m-2"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/20 flex items-center justify-center">
-                <ArrowLeftRight className="w-5 h-5 text-amber-400" strokeWidth={1.5} />
-              </div>
-              <div className="text-left">
-                <span className="text-white font-bold text-sm block">Transactions</span>
-                <span className="text-[#8E8E93] text-[10px] font-semibold">View all your activity</span>
-              </div>
+        {/* Transactions - compact row */}
+        <button 
+          onClick={() => setIsTransactionsOpen(true)}
+          className="w-full bg-[#141414] rounded-xl px-4 py-3 border border-white/5 flex items-center justify-between hover:bg-white/[0.04] transition-all active:scale-[0.98] mb-2"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/20 flex items-center justify-center">
+              <ArrowLeftRight className="w-4 h-4 text-amber-400" strokeWidth={1.5} />
             </div>
-            <ChevronRight className="w-5 h-5 text-gray-600" />
-          </button>
-        </div>
+            <span className="text-white font-bold text-sm">Transactions</span>
+          </div>
+          <ChevronRight className="w-4 h-4 text-gray-600" />
+        </button>
 
-        <div className="bg-[#141414] rounded-2xl p-4 border border-white/5 space-y-2 mb-4">
-          <h3 className="text-[9px] uppercase font-black text-[#8E8E93] tracking-widest mb-3 px-1">Quick Actions</h3>
-          <ProfileItem 
-            icon={<Headphones className="w-5 h-5 text-blue-400" strokeWidth={1.5} />} 
-            label="Contact Support" 
-            onClick={() => openLink('https://t.me/+fahpWJGmJEowZGQ1')}
-          />
-        </div>
+        {/* Contact Support - compact row */}
+        <button 
+          onClick={() => openLink('https://t.me/+fahpWJGmJEowZGQ1')}
+          className="w-full bg-[#141414] rounded-xl px-4 py-3 border border-white/5 flex items-center justify-between hover:bg-white/[0.04] transition-all active:scale-[0.98] mb-2"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-blue-500/15 border border-blue-500/20 flex items-center justify-center">
+              <Headphones className="w-4 h-4 text-blue-400" strokeWidth={1.5} />
+            </div>
+            <span className="text-white font-bold text-sm">Contact Support</span>
+          </div>
+          <ChevronRight className="w-4 h-4 text-gray-600" />
+        </button>
 
-        <div className="bg-[#141414] rounded-2xl p-4 border border-white/5 space-y-2 mb-4">
-          <h3 className="text-[9px] uppercase font-black text-[#8E8E93] tracking-widest mb-3 px-1">Legal & Info</h3>
-          <ProfileItem 
-            icon={<Shield className="w-5 h-5 text-emerald-400" strokeWidth={1.5} />} 
-            label="Terms & Conditions" 
+        {/* Legal & Info - compact list */}
+        <div className="bg-[#141414] rounded-xl border border-white/5 overflow-hidden mb-2">
+          <div className="px-4 pt-2.5 pb-1">
+            <span className="text-[9px] uppercase font-black text-[#8E8E93] tracking-widest">Legal & Info</span>
+          </div>
+          <CompactItem 
+            icon={<Shield className="w-3.5 h-3.5 text-emerald-400" strokeWidth={1.5} />}
+            label="Terms & Conditions"
             onClick={() => setSelectedLegal('terms')}
           />
-          <ProfileItem 
-            icon={<ScrollText className="w-5 h-5 text-orange-400" strokeWidth={1.5} />} 
-            label="Privacy Policy" 
+          <div className="mx-4 h-[1px] bg-white/5" />
+          <CompactItem 
+            icon={<ScrollText className="w-3.5 h-3.5 text-orange-400" strokeWidth={1.5} />}
+            label="Privacy Policy"
             onClick={() => setSelectedLegal('privacy')}
           />
-          <ProfileItem 
-            icon={<AlertCircle className="w-5 h-5 text-rose-400" strokeWidth={1.5} />} 
-            label="Acceptable Use" 
+          <div className="mx-4 h-[1px] bg-white/5" />
+          <CompactItem 
+            icon={<AlertCircle className="w-3.5 h-3.5 text-rose-400" strokeWidth={1.5} />}
+            label="Acceptable Use"
             onClick={() => setSelectedLegal('acceptable')}
           />
           {(user as any)?.isAdmin && (
-            <ProfileItem 
-              icon={<ShieldCheck className="w-5 h-5 text-red-500" strokeWidth={1.5} />} 
-              label="Admin Panel" 
-              onClick={() => navigate('/admin')}
-            />
+            <>
+              <div className="mx-4 h-[1px] bg-white/5" />
+              <CompactItem 
+                icon={<ShieldCheck className="w-3.5 h-3.5 text-red-500" strokeWidth={1.5} />}
+                label="Admin Panel"
+                onClick={() => navigate('/admin')}
+              />
+            </>
           )}
         </div>
 
@@ -283,6 +295,23 @@ export default function Profile() {
         />
       </main>
     </Layout>
+  );
+}
+
+function CompactItem({ icon, label, onClick }: { icon: React.ReactNode, label: string, onClick: () => void }) {
+  return (
+    <button 
+      onClick={onClick}
+      className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/[0.03] transition-all active:scale-[0.98]"
+    >
+      <div className="flex items-center gap-3">
+        <div className="w-6 h-6 flex items-center justify-center">
+          {icon}
+        </div>
+        <span className="font-semibold text-[13px] text-gray-300">{label}</span>
+      </div>
+      <ChevronRight className="w-3.5 h-3.5 text-gray-600" />
+    </button>
   );
 }
 

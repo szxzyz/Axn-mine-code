@@ -10,6 +10,7 @@ import { useLocation } from "wouter";
 import { SettingsPopup } from "@/components/SettingsPopup";
 import InvitePopup from "@/components/InvitePopup";
 import { useLanguage } from "@/hooks/useLanguage";
+import { MatrixMiningCounter } from "@/components/MatrixMiningCounter";
 import { Award, Wallet, RefreshCw, Flame, Ticket, Info, User as UserIcon, Clock, Loader2, Gift, Rocket, X, Bug, DollarSign, Coins, Send, Users, Check, ExternalLink, Plus, CalendarCheck, Bell, Star, Play, Zap, Settings, Film, Tv, ClipboardList, UserPlus, Share2, Copy, HandCoins, LogOut, Download, ShieldCheck } from "lucide-react";
 import { DiamondIcon } from "@/components/DiamondIcon";
 import { Button } from "@/components/ui/button";
@@ -1200,11 +1201,8 @@ export default function Home() {
                   </div>
                 </div>
                 
-                <div className="text-center mb-4">
-                  <div className="text-[#8E8E93] text-[9px] font-semibold uppercase tracking-wider mb-1">Mined SAT</div>
-                  <div className="text-3xl font-black text-white tabular-nums tracking-tight">
-                    {miningAmount.toFixed(6)} <span className="text-[#F5C542] text-xl">SAT</span>
-                  </div>
+                <div className="mb-4">
+                  <MatrixMiningCounter miningAmount={miningAmount} miningRate={miningRate} />
                 </div>
 
                 {activeBoosts.length > 0 && (
