@@ -668,8 +668,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const baseRate = 0.036 / 3600; // Base: 0.036 / hour
       const section1Boost = parseFloat(user.adSection1Boost || "0") / 3600;
       const section2Boost = parseFloat(user.adSection2Boost || "0") / 3600;
+      // Referral boost is stored as per-hour value (0.1/h per active referral)
+      const referralBoostHourly = parseFloat(user.referralMiningBoost || "0");
+      const referralBoostPerSec = referralBoostHourly / 3600;
       
-      let totalRate = baseRate + section1Boost + section2Boost;
+      let totalRate = baseRate + section1Boost + section2Boost + referralBoostPerSec;
       boosts.forEach(boost => {
         totalRate += parseFloat(boost.miningRate);
       });
@@ -686,6 +689,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         baseRate: (baseRate * 3600).toFixed(4),
         section1Boost: (section1Boost * 3600).toFixed(4),
         section2Boost: (section2Boost * 3600).toFixed(4),
+        referralBoost: referralBoostHourly.toFixed(4),
         lastClaim: lastClaim,
         boosts: boosts.map((b: any) => ({
           id: b.id,
@@ -2075,6 +2079,167 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching valid referral count:", error);
       res.status(500).json({ message: "Failed to fetch valid referral count" });
+    }
+  });
+
+  // Get referral list with membership status and mining boost info
+  app.get('/api/referrals/list', async (req: any, res) => {
+    try {
+      const userId = req.session?.user?.user?.id || req.user?.user?.id;
+      if (!userId) return res.json({ referrals: [] });
+
+      const botToken = process.env.TELEGRAM_BOT_TOKEN;
+      const channelConfig = getChannelConfig();
+
+      // Get all referrals for this user
+      const referralRows = await db
+        .select({
+          refereeId: referrals.refereeId,
+          status: referrals.status,
+          createdAt: referrals.createdAt,
+          rewardAmount: referrals.rewardAmount,
+        })
+        .from(referrals)
+        .where(eq(referrals.referrerId, userId));
+
+      const result = [];
+      for (const ref of referralRows) {
+        const referee = await storage.getUser(ref.refereeId);
+        if (!referee) continue;
+
+        let channelMember = false;
+        let groupMember = false;
+
+        // Check membership if bot token is available and referee has telegram_id
+        if (botToken && referee.telegram_id) {
+          try {
+            const telegramNumericId = parseInt(referee.telegram_id, 10);
+            const [chanResult, groupResult] = await Promise.all([
+              verifyChannelMembership(telegramNumericId, channelConfig.channelId, botToken),
+              verifyChannelMembership(telegramNumericId, channelConfig.groupId, botToken),
+            ]);
+            channelMember = chanResult;
+            groupMember = groupResult;
+          } catch {}
+        }
+
+        const isActive = ref.status === 'completed' && channelMember && groupMember;
+        const totalSatsEarned = Math.round(parseFloat(ref.rewardAmount || '0'));
+
+        result.push({
+          refereeId: referee.telegram_id || ref.refereeId,
+          name: referee.firstName || referee.username || `User ${referee.telegram_id || ref.refereeId}`,
+          username: referee.username,
+          totalSatsEarned,
+          referralStatus: ref.status,
+          channelMember,
+          groupMember,
+          isActive,
+          miningBoost: isActive ? 0.1 : 0,
+        });
+      }
+
+      res.json({ referrals: result });
+    } catch (error) {
+      console.error("Error fetching referral list:", error);
+      res.status(500).json({ message: "Failed to fetch referral list" });
+    }
+  });
+
+  // Sync referral mining boosts - check all referees' membership, update boost, send notifications
+  app.post('/api/referrals/sync-boosts', async (req: any, res) => {
+    try {
+      const userId = req.session?.user?.user?.id || req.user?.user?.id;
+      if (!userId) return res.json({ success: false });
+
+      const botToken = process.env.TELEGRAM_BOT_TOKEN;
+      const channelConfig = getChannelConfig();
+
+      const referrer = await storage.getUser(userId);
+      if (!referrer) return res.json({ success: false });
+
+      // Get all completed referrals
+      const referralRows = await db
+        .select()
+        .from(referrals)
+        .where(and(eq(referrals.referrerId, userId), eq(referrals.status, 'completed')));
+
+      let activeCount = 0;
+      const previousBoost = parseFloat(referrer.referralMiningBoost || '0');
+
+      for (const ref of referralRows) {
+        const referee = await storage.getUser(ref.refereeId);
+        if (!referee || !referee.telegram_id || !botToken) {
+          continue;
+        }
+
+        const telegramNumericId = parseInt(referee.telegram_id, 10);
+        let channelMember = false;
+        let groupMember = false;
+
+        try {
+          [channelMember, groupMember] = await Promise.all([
+            verifyChannelMembership(telegramNumericId, channelConfig.channelId, botToken),
+            verifyChannelMembership(telegramNumericId, channelConfig.groupId, botToken),
+          ]);
+        } catch {}
+
+        if (channelMember && groupMember) {
+          activeCount++;
+        } else if (referrer.telegram_id) {
+          // Friend left — notify the referrer
+          const refName = referee.firstName || referee.username || 'Your friend';
+          let what = '';
+          if (!channelMember && !groupMember) {
+            what = 'channel & group';
+          } else if (!channelMember) {
+            what = 'channel';
+          } else {
+            what = 'group';
+          }
+
+          let notifMsg = '';
+          if (what === 'channel & group') {
+            notifMsg = `⚠️ Your friend <b>${refName}</b> has left the channel & group. Your mining speed -0.1/h has been removed.`;
+          } else {
+            notifMsg = `⚠️ Your friend <b>${refName}</b> has left the ${what}. Your mining speed -0.1/h has been removed. Ask your friend to rejoin the ${what} so your mining speed continues.`;
+          }
+
+          try {
+            const { sendUserTelegramNotification } = await import('./telegram');
+            await sendUserTelegramNotification(referrer.telegram_id, notifMsg);
+          } catch {}
+        }
+      }
+
+      // 0.1/h per active referral in terms of rate-per-hour
+      const newBoostPerHour = activeCount * 0.1;
+      // Store as per-hour value (the UI shows /h directly)
+      const newBoost = newBoostPerHour.toFixed(8);
+
+      // Only update if changed
+      if (Math.abs(parseFloat(newBoost) - previousBoost) > 0.000001) {
+        await db
+          .update(users)
+          .set({ referralMiningBoost: newBoost, updatedAt: new Date() })
+          .where(eq(users.id, userId));
+
+        // If boost was restored (increased), notify the referrer
+        if (parseFloat(newBoost) > previousBoost && referrer.telegram_id) {
+          try {
+            const { sendUserTelegramNotification } = await import('./telegram');
+            await sendUserTelegramNotification(
+              referrer.telegram_id,
+              `✅ Your mining speed has been restored! +${(parseFloat(newBoost) - previousBoost).toFixed(1)}/h added back because your friend rejoined the channel/group.`
+            );
+          } catch {}
+        }
+      }
+
+      res.json({ success: true, activeReferrals: activeCount, boostPerHour: newBoostPerHour });
+    } catch (error) {
+      console.error("Error syncing referral boosts:", error);
+      res.status(500).json({ message: "Failed to sync referral boosts" });
     }
   });
 

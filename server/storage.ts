@@ -528,7 +528,10 @@ export class DatabaseStorage implements IStorage {
     
     // Base rate
     const baseRate = 0.00001;
-    let totalRate = baseRate;
+    // Referral boost stored as per-hour value
+    const referralBoostHourly = parseFloat(user.referralMiningBoost || "0");
+    const referralBoostPerSec = referralBoostHourly / 3600;
+    let totalRate = baseRate + referralBoostPerSec;
     boosts.forEach(boost => {
       totalRate += parseFloat(boost.miningRate);
     });
@@ -543,6 +546,7 @@ export class DatabaseStorage implements IStorage {
       lastClaim,
       maxMining,
       rawMiningRate: totalRate,
+      referralBoost: referralBoostHourly.toFixed(4),
       boosts
     };
   }

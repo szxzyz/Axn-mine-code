@@ -181,6 +181,9 @@ export async function ensureDatabaseSchema(): Promise<void> {
       await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ad_section1_count INTEGER DEFAULT 0`);
       await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ad_section2_count INTEGER DEFAULT 0`);
       
+      // Add referral mining boost column
+      await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS referral_mining_boost DECIMAL(20, 8) DEFAULT '0'`);
+      
       // Alter existing balance columns to new precision (safely handle existing data)
       await db.execute(sql`ALTER TABLE users ALTER COLUMN balance TYPE DECIMAL(20, 0) USING ROUND(balance)`);
       await db.execute(sql`ALTER TABLE users ALTER COLUMN usd_balance TYPE DECIMAL(30, 10)`);
