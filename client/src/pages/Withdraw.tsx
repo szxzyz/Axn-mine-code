@@ -32,7 +32,7 @@ interface WithdrawalsResponse {
 
 interface User {
   id: string;
-  tonBalance?: string;
+  balance?: string;
 }
 
 export default function Withdraw() {
@@ -40,7 +40,6 @@ export default function Withdraw() {
   const [, setLocation] = useLocation();
   const [filter, setFilter] = useState<'all' | 'deposit' | 'withdraw'>('all');
   
-  // Withdrawal Popup State
   const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
   const [withdrawAddress, setWithdrawAddress] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
@@ -63,18 +62,18 @@ export default function Withdraw() {
     staleTime: 0,
   });
 
-  const tonBalance = parseFloat(user?.tonBalance || "0");
+  const satBalance = Math.floor(parseFloat(user?.balance || "0"));
   const withdrawalsData = Array.isArray(withdrawalsResponse?.withdrawals) ? withdrawalsResponse.withdrawals : [];
   
-  const minWithdraw = parseFloat(appSettings?.minimum_withdrawal_ton || "0.1");
-  const networkFee = parseFloat(appSettings?.withdrawal_fee_ton || "0.01");
+  const minWithdraw = parseFloat(appSettings?.minimum_withdrawal_sat || "100");
+  const networkFee = parseFloat(appSettings?.withdrawal_fee_sat || "0");
 
   const withdrawMutation = useMutation({
     mutationFn: async () => {
       const res = await apiRequest("POST", "/api/withdrawals", {
         address: withdrawAddress,
         amount: parseFloat(withdrawAmount),
-        method: 'TON'
+        method: 'SAT'
       });
       return res.json();
     },
@@ -97,22 +96,23 @@ export default function Withdraw() {
     return false;
   });
 
-  const formatTon = (amount: any) => {
-    const val = parseFloat(amount);
-    return isNaN(val) ? "0" : val.toString();
+  const formatSat = (amount: any) => {
+    const val = Math.floor(parseFloat(amount));
+    return isNaN(val) ? "0" : val.toLocaleString();
   };
 
   const handleWithdrawClick = () => {
-    if (parseFloat(withdrawAmount) < minWithdraw) {
-      showNotification(`Minimum withdrawal amount is ${minWithdraw} TON`, "error");
+    const amount = parseFloat(withdrawAmount);
+    if (isNaN(amount) || amount < minWithdraw) {
+      showNotification(`Minimum withdrawal amount is ${minWithdraw} SAT`, "error");
       return;
     }
-    if (parseFloat(withdrawAmount) > tonBalance) {
+    if (amount > satBalance) {
       showNotification("Insufficient balance", "error");
       return;
     }
     if (!withdrawAddress.trim()) {
-      showNotification("Please enter TON address", "error");
+      showNotification("Please enter your wallet address", "error");
       return;
     }
     withdrawMutation.mutate();
@@ -124,76 +124,65 @@ export default function Withdraw() {
         {/* Balance Card */}
         <div className="bg-[#261400] rounded-2xl p-4 space-y-4 border border-[#B34700]/30 shadow-xl">
           <div className="space-y-1">
-            <p className="text-[#D1D5DB] text-[10px] font-bold tracking-wider uppercase">BALANCE</p>
+            <p className="text-[#D1D5DB] text-[10px] font-bold tracking-wider uppercase">SAT Balance</p>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-[#3D1F00] flex items-center justify-center overflow-hidden border border-[#B34700]/30 shadow-inner">
-                <img src="/images/ton.png" alt="TON" className="w-full h-full object-cover scale-110" />
+              <div className="w-8 h-8 rounded-full bg-[#3D1F00] flex items-center justify-center border border-[#F5C542]/30 shadow-inner">
+                <span className="text-[#F5C542] text-lg font-bold">₿</span>
               </div>
               <div className="flex items-center gap-1.5 pt-0.5">
-                <span className="text-3xl font-bold leading-none">{formatTon(tonBalance)}</span>
-                <span className="text-lg font-bold text-[#D1D5DB] leading-none self-end pb-0.5">TON</span>
+                <span className="text-3xl font-bold leading-none">{satBalance.toLocaleString()}</span>
+                <span className="text-lg font-bold text-[#F5C542] leading-none self-end pb-0.5">SAT</span>
               </div>
             </div>
           </div>
 
           <div className="flex gap-2">
-            <Button 
-              className="flex-1 h-11 bg-[#E88A1A] hover:bg-[#B34700] text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 border-0 shadow-lg shadow-[#E88A1A]/10 transition-all active:scale-95"
-              onClick={() => setLocation('/top-up')}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4">
-                <path d="M12 19V5M12 5L5 12M12 5L19 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="rotate-180 origin-center" />
-              </svg>
-              Deposit
-            </Button>
-
             <Dialog open={withdrawDialogOpen} onOpenChange={setWithdrawDialogOpen}>
               <DialogTrigger asChild>
                 <Button 
-                  className="flex-1 h-11 bg-[#3D1F00] hover:bg-[#261400] text-white border border-[#B34700]/30 rounded-xl text-sm font-bold flex items-center justify-center gap-2 shadow-none transition-all active:scale-95"
+                  className="flex-1 h-11 bg-[#E88A1A] hover:bg-[#B34700] text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 border-0 shadow-lg shadow-[#E88A1A]/10 transition-all active:scale-95"
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4">
                     <path d="M12 19V5M12 5L5 12M12 5L19 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
-                  Withdraw
+                  Withdraw SAT
                 </Button>
               </DialogTrigger>
               <DialogContent className="bg-[#261400] border-[#B34700]/30 text-white w-[90%] rounded-3xl p-6 shadow-2xl">
                 <DialogHeader>
-                  <DialogTitle className="text-xl font-bold text-center">TON withdrawal</DialogTitle>
+                  <DialogTitle className="text-xl font-bold text-center">SAT Withdrawal</DialogTitle>
                 </DialogHeader>
                 
                 <div className="space-y-4 mt-4">
                   <div className="space-y-2">
-                    <Label className="text-xs text-[#D1D5DB] font-bold">Address (TON):</Label>
+                    <Label className="text-xs text-[#D1D5DB] font-bold">Wallet Address:</Label>
                     <Input 
-                      placeholder="Enter address" 
+                      placeholder="Bitcoin / Lightning / FaucetPay address" 
                       value={withdrawAddress}
                       onChange={(e) => setWithdrawAddress(e.target.value)}
-                      className="bg-[#3D1F00] border-[#B34700]/30 h-12 rounded-xl text-sm placeholder:text-[#555] focus:border-[#E88A1A]/50 transition-all"
+                      className="bg-[#3D1F00] border-[#B34700]/30 h-12 rounded-xl text-sm placeholder:text-[#555] focus:border-[#F5C542]/50 transition-all"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-xs text-[#D1D5DB] font-bold">Amount (TON):</Label>
+                    <Label className="text-xs text-[#D1D5DB] font-bold">Amount (SAT):</Label>
                     <Input 
                       type="number"
-                      placeholder="0.0000" 
+                      placeholder="0" 
                       value={withdrawAmount}
                       onChange={(e) => setWithdrawAmount(e.target.value)}
-                      className="bg-[#3D1F00] border-[#B34700]/30 h-12 rounded-xl text-sm placeholder:text-[#555] focus:border-[#E88A1A]/50 transition-all"
+                      className="bg-[#3D1F00] border-[#B34700]/30 h-12 rounded-xl text-sm placeholder:text-[#555] focus:border-[#F5C542]/50 transition-all"
                     />
+                    <p className="text-xs text-[#D1D5DB]">Available: {satBalance.toLocaleString()} SAT</p>
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-xs text-[#D1D5DB] font-bold">To receive (TON):</Label>
-                    <div className="bg-[#3D1F00] border-[#B34700]/30 h-12 rounded-xl px-4 flex items-center justify-between">
+                    <Label className="text-xs text-[#D1D5DB] font-bold">You will receive (SAT):</Label>
+                    <div className="bg-[#3D1F00] border border-[#B34700]/30 h-12 rounded-xl px-4 flex items-center justify-between">
                       <span className="text-sm font-bold text-white">
-                        {withdrawAmount ? (parseFloat(withdrawAmount) - networkFee > 0 ? (parseFloat(withdrawAmount) - networkFee).toFixed(4) : "0.0000") : "0.0000"}
+                        {withdrawAmount ? Math.max(0, Math.floor(parseFloat(withdrawAmount) - networkFee)).toLocaleString() : "0"}
                       </span>
-                      <div className="w-6 h-6 rounded-full bg-[#3D1F00] flex items-center justify-center overflow-hidden border border-[#B34700]/30 shadow-inner">
-                        <img src="/images/ton.png" alt="TON" className="w-full h-full object-cover scale-110" />
-                      </div>
+                      <span className="text-[#F5C542] text-lg font-bold">₿</span>
                     </div>
                   </div>
 
@@ -206,14 +195,15 @@ export default function Withdraw() {
                         {withdrawMutation.isPending ? (
                           <Loader2 className="w-5 h-5 animate-spin" />
                         ) : (
-                          `Withdraw (Min ${minWithdraw} TON)`
+                          `Withdraw (Min ${minWithdraw.toLocaleString()} SAT)`
                         )}
                       </Button>
                     </div>
 
                   <div className="space-y-1 pt-2">
-                    <p className="text-[11px] text-[#D1D5DB] font-bold">•Network fee: {networkFee} TON</p>
-                    <p className="text-[11px] text-[#D1D5DB] font-bold">•Withdrawal time: 24 hours.</p>
+                    {networkFee > 0 && <p className="text-[11px] text-[#D1D5DB] font-bold">• Network fee: {networkFee} SAT</p>}
+                    <p className="text-[11px] text-[#D1D5DB] font-bold">• Withdrawal time: 24 hours.</p>
+                    <p className="text-[11px] text-[#D1D5DB] font-bold">• Supports: Bitcoin, Lightning Network, FaucetPay</p>
                   </div>
                 </div>
               </DialogContent>
@@ -224,7 +214,7 @@ export default function Withdraw() {
         {/* Transaction Tabs */}
         <div className="space-y-3">
           <div className="flex gap-2">
-            {(['all', 'deposit', 'withdraw'] as const).map((t) => (
+            {(['all', 'withdraw'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setFilter(t)}
@@ -259,7 +249,7 @@ export default function Withdraw() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-bold text-[#E88A1A]">-{formatTon(w.amount)} TON</p>
+                      <p className="text-sm font-bold text-[#E88A1A]">-{formatSat(w.amount)} SAT</p>
                       <p className={`text-[10px] font-bold uppercase ${
                         w.status === 'pending' ? 'text-[#F2B824]' : 
                         w.status === 'approved' || w.status === 'paid' ? 'text-[#26D07C]' : 'text-red-500'

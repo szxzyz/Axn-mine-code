@@ -35,7 +35,7 @@ export default function Profile() {
   const [isTopUpOpen, setIsTopUpOpen] = React.useState(false);
 
   const uid = (user as any)?.referralCode || (user as any)?.id?.slice(0, 8) || '00000';
-  const tonWithdrawBalance = parseFloat((user as any)?.tonBalance || "0");
+  const tonWithdrawBalance = Math.floor(parseFloat((user as any)?.balance || "0"));
 
   const copyUid = () => {
     navigator.clipboard.writeText(uid);
@@ -192,12 +192,12 @@ export default function Profile() {
                 <div className="w-6 h-6 rounded-full bg-[#1a1a1a] border border-white/10 flex items-center justify-center">
                   <img src="/images/ton.png" alt="TON" className="w-4 h-4 object-cover rounded-full" />
                 </div>
-                <span className="text-[#8E8E93] text-[8px] font-black uppercase tracking-widest">TON Balance</span>
+                <span className="text-[#8E8E93] text-[8px] font-black uppercase tracking-widest">SAT Balance</span>
               </div>
               <p className="text-2xl font-black text-white leading-none tabular-nums">
-                {tonWithdrawBalance.toFixed(3)}
+                {tonWithdrawBalance.toLocaleString()}
               </p>
-              <p className="text-blue-400 text-[9px] font-bold uppercase tracking-wider mt-1">TON</p>
+              <p className="text-[#F5C542] text-[9px] font-bold uppercase tracking-wider mt-1">SAT</p>
             </div>
           </div>
 

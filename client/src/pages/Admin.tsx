@@ -227,8 +227,8 @@ export default function AdminPage() {
                   />
                   <StatCard 
                     icon="money-bill-wave" 
-                    label="Total TON Withdrawn" 
-                    value={parseFloat(stats?.tonWithdrawn || '0').toFixed(2) + ' TON'} 
+                    label="Total SAT Withdrawn" 
+                    value={Math.floor(parseFloat(stats?.tonWithdrawn || '0')) + ' SAT'} 
                     iconColor="text-red-400"
                   />
                 </div>
@@ -568,10 +568,8 @@ function UserProfileTabs({ user: initialUser, onClose }: { user: any; onClose: (
           <div className="bg-white/5 border border-white/10 p-3 rounded">
             <p className="text-xs text-muted-foreground mb-2">Balances</p>
             <div className="grid grid-cols-3 gap-2 text-center">
-              <div><p className="text-xs text-muted-foreground">Hrum</p><p className="font-bold text-[#4cd3ff]">{formatHrum(user.balance)}</p></div>
-              <div><p className="text-xs text-muted-foreground">TON (W)</p><p className="font-bold text-purple-400">{format$(user.tonBalance || '0', false)}</p></div>
-              <div><p className="text-xs text-muted-foreground">TON (A)</p><p className="font-bold text-blue-400">{format$(user.tonAppBalance || '0', false)}</p></div>
-              <div><p className="text-xs text-muted-foreground">BUG</p><p className="font-bold text-green-400" >{parseFloat(user.bugBalance || '0').toFixed(2)}</p></div>
+              <div><p className="text-xs text-muted-foreground">SAT</p><p className="font-bold text-[#F5C542]">{Math.floor(parseFloat(user.balance || '0')).toLocaleString()}</p></div>
+              <div><p className="text-xs text-muted-foreground">BUG</p><p className="font-bold text-green-400">{parseFloat(user.bugBalance || '0').toFixed(2)}</p></div>
             </div>
           </div>
 
@@ -601,8 +599,8 @@ function UserProfileTabs({ user: initialUser, onClose }: { user: any; onClose: (
           {(user.cwalletId || user.usdtWalletAddress || user.telegramStarsUsername) && (
             <div className="bg-white/5 border border-white/10 p-2 rounded">
               <p className="text-xs text-muted-foreground mb-1">Wallet Addresses</p>
-              {user.cwalletId && <p className="font-mono text-xs text-[#4cd3ff] break-all">TON: {user.cwalletId}</p>}
-              {user.usdtWalletAddress && <p className="font-mono text-xs text-green-400 break-all">TONT: {user.usdtWalletAddress}</p>}
+              {user.cwalletId && <p className="font-mono text-xs text-[#4cd3ff] break-all">BTC: {user.cwalletId}</p>}
+              {user.usdtWalletAddress && <p className="font-mono text-xs text-green-400 break-all">LN: {user.usdtWalletAddress}</p>}
               {user.telegramStarsUsername && <p className="font-mono text-xs text-yellow-400">Stars: @{user.telegramStarsUsername}</p>}
             </div>
           )}
