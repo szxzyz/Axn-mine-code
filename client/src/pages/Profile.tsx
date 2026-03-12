@@ -8,9 +8,7 @@ import {
   FileText, 
   Check, 
   ChevronRight, 
-  X,
   ArrowLeftRight,
-  Globe2,
   Headphones,
   Shield,
   ScrollText,
@@ -26,41 +24,17 @@ import TransactionsOverlay from "@/components/TransactionsOverlay";
 import TopUpPopup from "@/components/TopUpPopup";
 import WithdrawalPopup from "@/components/WithdrawalPopup";
 
-type Language = 'en' | 'hi' | 'ru' | 'fa' | 'ar' | 'tr' | 'es' | 'pt' | 'id' | 'ur' | 'bn' | 'fr' | 'de' | 'it' | 'zh' | 'ja' | 'ko';
-
 export default function Profile() {
   const { user } = useAuth();
-  const { language, setLanguage, t } = useLanguage();
+  const { t } = useLanguage();
   const [, navigate] = useLocation();
   const [copied, setCopied] = React.useState(false);
   const [selectedLegal, setSelectedLegal] = React.useState<string | null>(null);
-  const [isLanguageOpen, setIsLanguageOpen] = React.useState(false);
   const [isWithdrawOpen, setIsWithdrawOpen] = React.useState(false);
   const [isTransactionsOpen, setIsTransactionsOpen] = React.useState(false);
   const [isTopUpOpen, setIsTopUpOpen] = React.useState(false);
 
-  const languages: { code: Language, name: string, flag: string }[] = [
-    { code: 'en', name: 'English', flag: '🇺🇸' },
-    { code: 'hi', name: 'हिंदी', flag: '🇮🇳' },
-    { code: 'ru', name: 'Русский', flag: '🇷🇺' },
-    { code: 'fa', name: 'فارسی', flag: '🇮🇷' },
-    { code: 'ar', name: 'العربية', flag: '🇸🇦' },
-    { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
-    { code: 'es', name: 'Español', flag: '🇪🇸' },
-    { code: 'pt', name: 'Português', flag: '🇧🇷' },
-    { code: 'id', name: 'Bahasa Indonesia', flag: '🇮🇩' },
-    { code: 'ur', name: 'اردو', flag: '🇵🇰' },
-    { code: 'bn', name: 'বাংলা', flag: '🇧🇩' },
-    { code: 'fr', name: 'Français', flag: '🇫🇷' },
-    { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
-    { code: 'it', name: 'Italiano', flag: '🇮🇹' },
-    { code: 'zh', name: '中文', flag: '🇨🇳' },
-    { code: 'ja', name: '日本語', flag: '🇯🇵' },
-    { code: 'ko', name: '한국어', flag: '🇰🇷' },
-  ];
-
   const uid = (user as any)?.referralCode || (user as any)?.id?.slice(0, 8) || '00000';
-  const tonAppBalance = parseFloat((user as any)?.tonAppBalance || "0");
   const tonWithdrawBalance = parseFloat((user as any)?.tonBalance || "0");
 
   const copyUid = () => {
@@ -68,12 +42,6 @@ export default function Profile() {
     setCopied(true);
     showNotification(t('copied'), 'success');
     setTimeout(() => setCopied(false), 2000);
-  };
-
-  const selectLanguage = (code: Language) => {
-    setLanguage(code);
-    setIsLanguageOpen(false);
-    showNotification(`Language changed to ${languages.find(l => l.code === code)?.name}`, 'success');
   };
 
   const openLink = (url: string) => {
@@ -218,26 +186,13 @@ export default function Profile() {
         </div>
 
         <div className="bg-[#141414] rounded-2xl p-4 border border-white/5 mb-4">
-          <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="mb-4">
             <div className="bg-[#0d0d0d] rounded-xl p-4 border border-white/5">
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-6 h-6 rounded-full bg-[#1a1a1a] border border-white/10 flex items-center justify-center">
                   <img src="/images/ton.png" alt="TON" className="w-4 h-4 object-cover rounded-full" />
                 </div>
-                <span className="text-[#8E8E93] text-[8px] font-black uppercase tracking-widest">App Balance</span>
-              </div>
-              <p className="text-2xl font-black text-white leading-none tabular-nums">
-                {tonAppBalance.toFixed(3)}
-              </p>
-              <p className="text-[#B9FF66] text-[9px] font-bold uppercase tracking-wider mt-1">TON</p>
-            </div>
-
-            <div className="bg-[#0d0d0d] rounded-xl p-4 border border-white/5">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 rounded-full bg-[#1a1a1a] border border-white/10 flex items-center justify-center">
-                  <img src="/images/ton.png" alt="TON" className="w-4 h-4 object-cover rounded-full" />
-                </div>
-                <span className="text-[#8E8E93] text-[8px] font-black uppercase tracking-widest">Withdraw</span>
+                <span className="text-[#8E8E93] text-[8px] font-black uppercase tracking-widest">TON Balance</span>
               </div>
               <p className="text-2xl font-black text-white leading-none tabular-nums">
                 {tonWithdrawBalance.toFixed(3)}
@@ -284,12 +239,6 @@ export default function Profile() {
 
         <div className="bg-[#141414] rounded-2xl p-4 border border-white/5 space-y-2 mb-4">
           <h3 className="text-[9px] uppercase font-black text-[#8E8E93] tracking-widest mb-3 px-1">Quick Actions</h3>
-          <ProfileItem 
-            icon={<Globe2 className="w-5 h-5 text-purple-400" strokeWidth={1.5} />} 
-            label="Language" 
-            value={languages.find(l => l.code === language)?.name}
-            onClick={() => setIsLanguageOpen(true)}
-          />
           <ProfileItem 
             icon={<Headphones className="w-5 h-5 text-blue-400" strokeWidth={1.5} />} 
             label="Contact Support" 
@@ -352,46 +301,6 @@ export default function Profile() {
           )}
         </AnimatePresence>
 
-        <AnimatePresence>
-          {isLanguageOpen && (
-            <motion.div 
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed inset-0 bg-[#050505] z-[100] flex flex-col"
-            >
-              <div className="p-6 border-b border-white/5 flex items-center justify-between">
-                <h2 className="text-xl font-bold text-white uppercase tracking-tight italic">
-                  {t('app_language')}
-                </h2>
-                <Button variant="ghost" size="icon" onClick={() => setIsLanguageOpen(false)}>
-                  <X className="w-6 h-6" />
-                </Button>
-              </div>
-              <div className="flex-1 overflow-y-auto p-4 space-y-2">
-                {languages.map((lang) => (
-                  <button
-                    key={lang.code}
-                    onClick={() => selectLanguage(lang.code)}
-                    className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all ${
-                      language === lang.code 
-                        ? "bg-[#B9FF66]/10 border-[#B9FF66] text-[#B9FF66]" 
-                        : "bg-[#141414] border-white/5 text-gray-400"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl">{lang.flag}</span>
-                      <span className="font-bold">{lang.name}</span>
-                    </div>
-                    {language === lang.code && <Check className="w-5 h-5" />}
-                  </button>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
         <TransactionsOverlay 
           open={isTransactionsOpen} 
           onOpenChange={setIsTransactionsOpen} 
@@ -406,7 +315,7 @@ export default function Profile() {
         <WithdrawalPopup
           open={isWithdrawOpen}
           onOpenChange={setIsWithdrawOpen}
-          tonBalance={Number((user as any)?.tonAppBalance) || 0}
+          tonBalance={tonWithdrawBalance}
         />
       </main>
     </Layout>
