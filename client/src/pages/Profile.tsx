@@ -12,9 +12,7 @@ import {
   Headphones,
   Shield,
   ScrollText,
-  AlertCircle,
-  Plus,
-  Minus
+  AlertCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -183,40 +181,6 @@ export default function Profile() {
           >
             {copied ? <Check className="w-4 h-4 text-[#B9FF66]" /> : <Copy className="w-4 h-4 text-gray-400" />}
           </button>
-        </div>
-
-        <div className="bg-[#141414] rounded-2xl p-4 border border-white/5 mb-4">
-          <div className="mb-4">
-            <div className="bg-[#0d0d0d] rounded-xl p-4 border border-white/5">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 rounded-full bg-[#1a1a1a] border border-white/10 flex items-center justify-center">
-                  <img src="/images/ton.png" alt="TON" className="w-4 h-4 object-cover rounded-full" />
-                </div>
-                <span className="text-[#8E8E93] text-[8px] font-black uppercase tracking-widest">SAT Balance</span>
-              </div>
-              <p className="text-2xl font-black text-white leading-none tabular-nums">
-                {tonWithdrawBalance.toLocaleString()}
-              </p>
-              <p className="text-[#F5C542] text-[9px] font-bold uppercase tracking-wider mt-1">SAT</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <Button 
-              onClick={() => setIsTopUpOpen(true)}
-              className="h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-blue-600/20"
-            >
-              <Plus className="w-4 h-4 mr-1.5" />
-              Deposit
-            </Button>
-            <Button 
-              onClick={() => setIsWithdrawOpen(true)}
-              className="h-12 bg-white hover:bg-zinc-200 text-black rounded-xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-white/10"
-            >
-              <Minus className="w-4 h-4 mr-1.5" />
-              Withdraw
-            </Button>
-          </div>
         </div>
 
         <div className="bg-[#141414] rounded-2xl p-4 border border-white/5 mb-4">

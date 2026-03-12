@@ -10,7 +10,7 @@ import { useLocation } from "wouter";
 import { SettingsPopup } from "@/components/SettingsPopup";
 import InvitePopup from "@/components/InvitePopup";
 import { useLanguage } from "@/hooks/useLanguage";
-import { Award, Wallet, RefreshCw, Flame, Ticket, Info, User as UserIcon, Clock, Loader2, Gift, Rocket, X, Bug, DollarSign, Coins, Send, Users, Check, ExternalLink, Plus, CalendarCheck, Bell, Star, Play, Zap, Settings, Film, Tv, LayoutDashboard, ClipboardList, UserPlus, Share2, Copy, HandCoins, LogOut, Download, ShieldCheck } from "lucide-react";
+import { Award, Wallet, RefreshCw, Flame, Ticket, Info, User as UserIcon, Clock, Loader2, Gift, Rocket, X, Bug, DollarSign, Coins, Send, Users, Check, ExternalLink, Plus, CalendarCheck, Bell, Star, Play, Zap, Settings, Film, Tv, ClipboardList, UserPlus, Share2, Copy, HandCoins, LogOut, Download, ShieldCheck } from "lucide-react";
 import { DiamondIcon } from "@/components/DiamondIcon";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,7 +19,6 @@ import { apiRequest } from "@/lib/queryClient";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AnimatePresence, motion } from "framer-motion";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import WithdrawalPopup from "@/components/WithdrawalPopup";
 
 
@@ -1160,10 +1159,10 @@ export default function Home() {
             {/* Invite Friends Button */}
             <button
               onClick={() => setInviteOpen(true)}
-              className="flex items-center gap-1.5 bg-blue-600/20 border border-blue-500/30 rounded-xl px-3 py-2 hover:bg-blue-600/30 transition-colors"
+              className="flex items-center gap-1.5 bg-[#1a1a1a] border border-white/10 rounded-xl px-3 py-2 hover:bg-white/10 transition-all active:scale-95"
             >
-              <UserPlus className="w-4 h-4 text-blue-400" />
-              <span className="text-blue-400 text-xs font-bold">Invite</span>
+              <Users className="w-4 h-4 text-white" />
+              <span className="text-white text-xs font-black uppercase tracking-wider">Invite</span>
             </button>
           </div>
 
@@ -1191,26 +1190,8 @@ export default function Home() {
             </div>
           </div>
 
-          <Tabs defaultValue="mine" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 bg-[#0d0d0d] border border-white/5 h-12 p-1 rounded-xl mb-4 shadow-inner">
-              <TabsTrigger 
-                value="mine" 
-                className="flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-wider rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:text-white/40 transition-all h-full"
-              >
-                <Zap className="w-3.5 h-3.5" />
-                {t('mine').toUpperCase()}
-              </TabsTrigger>
-              <TabsTrigger 
-                value="earn" 
-                className="flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-wider rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:text-white/40 transition-all h-full"
-              >
-                <LayoutDashboard className="w-3.5 h-3.5" />
-                {t('earn').toUpperCase()}
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="mine" className="mt-0 outline-none overflow-hidden">
-              <div className="bg-[#141414] rounded-2xl p-4 border border-white/5 mb-1">
+          <div className="w-full">
+              <div className="bg-[#141414] rounded-2xl p-4 border border-white/5 mb-4">
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-[#8E8E93] text-[10px] font-black uppercase tracking-widest">{t('mining_status')}</span>
                   <div className="flex items-center gap-1.5">
@@ -1223,10 +1204,6 @@ export default function Home() {
                   <div className="text-[#8E8E93] text-[9px] font-semibold uppercase tracking-wider mb-1">Mined SAT</div>
                   <div className="text-3xl font-black text-white tabular-nums tracking-tight">
                     {miningAmount.toFixed(6)} <span className="text-[#F5C542] text-xl">SAT</span>
-                  </div>
-                  <div className="flex items-center justify-center gap-1 mt-1 text-blue-500 text-[11px] font-bold">
-                    <Zap className="w-3 h-3 fill-current" />
-                    {miningRatePerHour.toFixed(4)} SAT/h
                   </div>
                 </div>
 
@@ -1291,16 +1268,12 @@ export default function Home() {
                   </Button>
                 </div>
               </div>
-            </TabsContent>
 
-            <TabsContent value="earn" className="mt-0 outline-none">
-              <div className="space-y-4 pt-1">
+              <div className="grid grid-cols-2 gap-3">
                 <AdWatchingSection user={user as User} section="section1" />
                 <AdWatchingSection user={user as User} section="section2" />
               </div>
-            </TabsContent>
-
-          </Tabs>
+          </div>
         </div>
 
       </main>
