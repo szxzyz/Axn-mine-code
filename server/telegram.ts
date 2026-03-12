@@ -33,7 +33,7 @@ function format$(value: string | number): string {
 
 // Escape special characters for Telegram MarkdownV2
 function escapeMarkdownV2(text: string): string {
-  return text.replace(/[_*\[\]()~`>#+\-=|{}.!]/g, '\\TON&');
+  return text.replace(/[_*\[\]()~`>#+\-=|{}.!]/g, '\\$&');
 }
 
 interface TelegramMessage {
@@ -235,7 +235,7 @@ export async function handleTelegramCallback(callbackQuery: any): Promise<boolea
       
       const user = await storageInstance.getUser(deposit.userId);
       if (user && user.telegram_id) {
-        await sendUserTelegramNotification(user.telegram_id, `✅ Your deposit of ${format$(deposit.amount)} TON has been approved and credited to your account!`);
+        await sendUserTelegramNotification(user.telegram_id, `✅ Your deposit of ${format$(deposit.amount)} SAT has been approved and credited to your account!`);
       }
 
       const updatedText = message.text + "\n\n✅ <b>Status: APPROVED</b>";
@@ -254,7 +254,7 @@ export async function handleTelegramCallback(callbackQuery: any): Promise<boolea
       
       const user = await storageInstance.getUser(deposit.userId);
       if (user && user.telegram_id) {
-        await sendUserTelegramNotification(user.telegram_id, `❌ Your deposit of ${format$(deposit.amount)} TON was rejected by admin.`);
+        await sendUserTelegramNotification(user.telegram_id, `❌ Your deposit of ${format$(deposit.amount)} SAT was rejected by admin.`);
       }
 
       const updatedText = message.text + "\n\n❌ <b>Status: REJECTED</b>";
@@ -282,7 +282,7 @@ export async function sendDepositNotificationToAdmin(deposit: any, user: any): P
                `👤 User: ${user.firstName || user.username}\n` +
                `🆔 Telegram ID: <code>${user.telegram_id}</code>\n` +
                `💳 Username: ${user.username ? `@${user.username}` : 'N/A'}\n` +
-               `💵 Amount: ${format$(deposit.amount)} TON\n` +
+               `💵 Amount: ${format$(deposit.amount)} SAT\n` +
                `📝 Memo: <code>${user.telegram_id}</code>\n` +
                `📅 Date: ${new Date().toLocaleString()}\n` +
                `\nStatus: Pending`;
@@ -439,8 +439,8 @@ export async function sendWithdrawalRequestNotification(withdrawal: any, user: a
                  `🆔 User ID: <code>${userTelegramId}</code>\n` +
                  `💳 Username: ${userTelegramUsername}\n` +
                  `🌐 Address:\n<code>${walletAddress}</code>\n` +
-                 `💸 Amount: ${format$(netAmount)} TON\n` +
-                 `🛂 Fee: ${format$(feeAmount)} (${feePercent}%)\n` +
+                 `💸 Amount: ${format$(netAmount)} SAT\n` +
+                 `🛂 Fee: ${format$(feeAmount)} SAT (${feePercent}%)\n` +
                  `📅 Date: ${currentDate}\n` +
                  `🤖 Bot: @MoneyHrumbot`;
 
@@ -503,8 +503,8 @@ export async function sendWithdrawalApprovedNotification(withdrawal: any): Promi
 💳 Username: ${userTelegramUsername}
 🌐 Address:
 <code>${walletAddress}</code>
-💸 Amount: ${format$(netAmount)} TON
-🛂 Fee: ${format$(feeAmount)} (${feePercent}%)
+💸 Amount: ${format$(netAmount)} SAT
+🛂 Fee: ${format$(feeAmount)} SAT (${feePercent}%)
 📅 Date: ${currentDate}
 🤖 Bot: @MoneyHrumbot`;
 
@@ -552,7 +552,7 @@ export async function sendReferralRewardNotification(
     const message = `🎉 <b>New Referral Activity!</b>
 
 Your friend <b>${safeName}</b> watched their first ad.
-💰 You earned <b>TON${formatted}</b>
+💰 You earned <b>${formatted} SAT</b>
 
 Keep inviting more friends to earn more!`;
 
@@ -646,8 +646,8 @@ export function formatWelcomeMessage(): { message: string; inlineKeyboard: any }
   const groupUrl = 'https://t.me/+fahpWJGmJEowZGQ1';
   
   const message = `👋 Hey! Welcome, glad to have you here.\n\n` +
-                 `Start mining HRUM directly in the app and earn effortlessly.\n\n` +
-                 `Convert your mined HRUM into TON anytime and withdraw securely.\n\n` +
+                 `Mine SAT (Satoshi) directly in the app and earn Bitcoin effortlessly.\n\n` +
+                 `Withdraw your SAT directly to Bitcoin, Lightning Network, or FaucetPay.\n\n` +
                  `Invite your friends and earn 20% of their mining income.`;
 
   const inlineKeyboard = {
@@ -838,7 +838,7 @@ export async function handleInlineQuery(inlineQuery: any): Promise<boolean> {
         photo_url: shareImageUrl,
         thumbnail_url: shareImageUrl,
         title: '💵 Get Paid with Money Adz!',
-        description: 'Join Money Adz and earn TONHrum tokens by watching ads or completing simple tasks!',
+        description: 'Join Money Adz and earn SAT (Bitcoin) by watching ads or completing simple tasks!',
         caption: '💵 Get paid for completing tasks and watching ads.',
         parse_mode: 'HTML',
         reply_markup: {
@@ -994,7 +994,7 @@ Share your unique referral link and earn Hrum when your friends join:
         try {
           const stats = await storage.getAppStats();
           
-          const statsMessage = `📊 Application Stats\n\n👥 Total Registered Users: ${stats.totalUsers.toLocaleString()}\n👤 Active Users Today: ${stats.activeUsersToday}\n🔗 Total Friends Invited: ${stats.totalInvites.toLocaleString()}\n\n💰 Total Earnings (All Users): TON${parseFloat(stats.totalEarnings).toFixed(2)}\n💎 Total Referral Earnings: TON${parseFloat(stats.totalReferralEarnings).toFixed(2)}\n🏦 Total Payouts: TON${parseFloat(stats.totalPayouts).toFixed(2)}\n\n🚀 Growth (Last 24h): +${stats.newUsersLast24h} new users`;
+          const statsMessage = `📊 Application Stats\n\n👥 Total Registered Users: ${stats.totalUsers.toLocaleString()}\n👤 Active Users Today: ${stats.activeUsersToday}\n🔗 Total Friends Invited: ${stats.totalInvites.toLocaleString()}\n\n💰 Total Earnings (All Users): ${Math.floor(parseFloat(stats.totalEarnings))} SAT\n💎 Total Referral Earnings: ${Math.floor(parseFloat(stats.totalReferralEarnings))} SAT\n🏦 Total Payouts: ${Math.floor(parseFloat(stats.totalPayouts))} SAT\n\n🚀 Growth (Last 24h): +${stats.newUsersLast24h} new users`;
           
           const refreshButton = {
             inline_keyboard: [[
@@ -1226,8 +1226,8 @@ Share your unique referral link and earn Hrum when your friends join:
 💳 Username: ${userTelegramUsername}
 🌐 Address:
 ${walletAddress}
-💸 Amount: ${netAmount.toFixed(5)} TON
-🛂 Fee: ${feeAmount.toFixed(5)} (${feePercent}%)
+💸 Amount: ${Math.floor(netAmount)} SAT
+🛂 Fee: ${Math.floor(feeAmount)} SAT (${feePercent}%)
 📅 Date: ${createdAt}
 🤖 Bot: @MoneyAdzbot`;
             
@@ -1406,8 +1406,8 @@ ${walletAddress}
 💳 Username: ${userTelegramUsername}
 🌐 Address:
 ${walletAddress}
-💸 Amount: ${netAmount.toFixed(5)} TON
-🛂 Fee: ${feeAmount.toFixed(5)} (${feePercent}%)
+💸 Amount: ${Math.floor(netAmount)} SAT
+🛂 Fee: ${Math.floor(feeAmount)} SAT (${feePercent}%)
 📅 Date: ${currentDate}
 🤖 Bot: @MoneyAdzbot`;
             
@@ -1426,8 +1426,8 @@ ${walletAddress}
               // User confirmation message with Amount (net after fee) and Fee with percentage
               const userConfirmationMessage = `🚀 Your payout has been successfully processed.
 
-💵 Amount: ${netAmount.toFixed(3)} TON
-🛂 Fee: ${feeAmount.toFixed(3)} (${feePercent}%)`;
+💵 Amount: ${Math.floor(netAmount)} SAT
+🛂 Fee: ${Math.floor(feeAmount)} SAT (${feePercent}%)`;
               
               // Always show "Share in Group" button instead of transaction button
               const shareInGroupButton = {
@@ -2174,7 +2174,7 @@ Please contact support if you believe this is a mistake.`;
           const details = withdrawal.details as any;
           
           requestsList += `👤 User: ${userName} (ID: ${user?.telegram_id || 'N/A'})\n`;
-          requestsList += `💰 Amount: TON${parseFloat(withdrawal.amount).toFixed(2)}\n`;
+          requestsList += `💰 Amount: ${Math.floor(parseFloat(withdrawal.amount))} SAT\n`;
           requestsList += `💳 Method: ${withdrawal.method}\n`;
           requestsList += `📋 Details: ${details?.paymentDetails || 'N/A'}\n`;
           requestsList += `⏰ Requested: ${withdrawal.createdAt ? new Date(withdrawal.createdAt.toString()).toLocaleString() : 'Unknown'}\n`;
@@ -2187,7 +2187,7 @@ Please contact support if you believe this is a mistake.`;
           const userName = user ? (user.firstName || user.username || 'Unknown User') : 'Unknown User';
           const details = withdrawal.details as any;
           
-          const adminMessage = `💵 Withdraw request from user ${userName} (ID: ${user?.telegram_id || 'N/A'})\nAmount: TON${parseFloat(withdrawal.amount).toFixed(2)}\nPayment System: ${withdrawal.method}\nPayment Details: ${details?.paymentDetails || 'N/A'}\nTime: ${withdrawal.createdAt ? new Date(withdrawal.createdAt.toString()).toLocaleString() : 'Unknown'}`;
+          const adminMessage = `💵 Withdraw request from user ${userName} (ID: ${user?.telegram_id || 'N/A'})\nAmount: ${Math.floor(parseFloat(withdrawal.amount))} SAT\nPayment System: ${withdrawal.method}\nPayment Details: ${details?.paymentDetails || 'N/A'}\nTime: ${withdrawal.createdAt ? new Date(withdrawal.createdAt.toString()).toLocaleString() : 'Unknown'}`;
           
           const adminKeyboard = {
             inline_keyboard: [

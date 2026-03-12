@@ -54,13 +54,13 @@ export interface PaymentSystem {
 }
 
 export let PAYMENT_SYSTEMS: PaymentSystem[] = [
-  { id: 'ton_coin', name: 'TON', emoji: '💎', minWithdrawal: 0.1, fee: 0.01 }
+  { id: 'sat_withdraw', name: 'SAT', emoji: '₿', minWithdrawal: 100, fee: 0 }
 ];
 
 // Helper to update payment systems from admin settings
 export function updatePaymentSystemsFromSettings(minWithdraw: number, fee: number) {
   PAYMENT_SYSTEMS = [
-    { id: 'ton_coin', name: 'TON', emoji: '💎', minWithdrawal: minWithdraw, fee: fee }
+    { id: 'sat_withdraw', name: 'SAT', emoji: '₿', minWithdrawal: minWithdraw, fee: fee }
   ];
 }
 
@@ -1574,16 +1574,16 @@ export class DatabaseStorage implements IStorage {
       }
 
       // Sync payment systems with admin settings before processing
-      const minWithdrawSetting = await db.select().from(adminSettings).where(eq(adminSettings.settingKey, 'minimum_withdrawal_ton')).limit(1);
-      const feeSetting = await db.select().from(adminSettings).where(eq(adminSettings.settingKey, 'withdrawal_fee_ton')).limit(1);
+      const minWithdrawSetting = await db.select().from(adminSettings).where(eq(adminSettings.settingKey, 'minimum_withdrawal_sat')).limit(1);
+      const feeSetting = await db.select().from(adminSettings).where(eq(adminSettings.settingKey, 'withdrawal_fee_sat')).limit(1);
       
-      const minWithdrawValue = parseFloat(minWithdrawSetting[0]?.settingValue || "0.1");
-      const feeValue = parseFloat(feeSetting[0]?.settingValue || "0.01");
+      const minWithdrawValue = parseFloat(minWithdrawSetting[0]?.settingValue || "100");
+      const feeValue = parseFloat(feeSetting[0]?.settingValue || "0");
       
       updatePaymentSystemsFromSettings(minWithdrawValue, feeValue);
 
-      // FORCE TON method only
-      const effectivePaymentSystemId = 'ton_coin';
+      // SAT withdrawal only
+      const effectivePaymentSystemId = 'sat_withdraw';
       const paymentSystem = PAYMENT_SYSTEMS.find(p => p.id === effectivePaymentSystemId);
       if (!paymentSystem) {
         return { success: false, message: 'Invalid payment system' };
@@ -1595,25 +1595,24 @@ export class DatabaseStorage implements IStorage {
       
       // Validate minimum withdrawal amount and ensure net amount is positive
       if (requestedAmount < paymentSystem.minWithdrawal) {
-        return { success: false, message: `Minimum withdrawal is ${paymentSystem.minWithdrawal} TON` };
+        return { success: false, message: `Minimum withdrawal is ${paymentSystem.minWithdrawal} SAT` };
       }
       
       if (netAmount <= 0) {
-        return { success: false, message: `Withdrawal amount must be greater than the fee of ${fee} TON` };
+        return { success: false, message: `Withdrawal amount must be greater than the fee of ${fee} SAT` };
       }
 
-      // Check balance (but don't deduct yet - wait for admin approval)
-      // Note: Admins have unlimited balance, so skip balance check for them
+      // Check SAT balance (use main balance field)
       const isAdmin = user.telegram_id === process.env.TELEGRAM_ADMIN_ID;
       
-      const userBalance = parseFloat(user.tonBalance || '0');
+      const userBalance = parseFloat(user.balance || '0');
       
       console.log('Balance check details:', { isAdmin, userBalance, requestedAmount, paymentSystemId: effectivePaymentSystemId });
 
       if (!isAdmin && userBalance < requestedAmount) {
         return { 
           success: false, 
-          message: `Insufficient balance. Your TON balance is ${userBalance.toFixed(4)}, but you requested ${requestedAmount.toFixed(4)}.` 
+          message: `Insufficient SAT balance. You have ${Math.floor(userBalance)} SAT, but requested ${Math.floor(requestedAmount)} SAT.` 
         };
       }
 
@@ -1625,12 +1624,12 @@ export class DatabaseStorage implements IStorage {
         requestedAmount: requestedAmount.toString(),
         fee: fee.toString(),
         netAmount: netAmount.toString(),
-        totalDeducted: requestedAmount.toString() // Track total amount to deduct later
+        totalDeducted: requestedAmount.toString()
       };
 
       const [withdrawal] = await db.insert(withdrawals).values({
         userId: userId,
-        amount: amount, // Store the full requested amount that will be deducted from balance
+        amount: amount,
         status: 'pending',
         method: paymentSystem.name,
         details: withdrawalDetails
@@ -1638,7 +1637,7 @@ export class DatabaseStorage implements IStorage {
 
       return { 
         success: true, 
-        message: `Payout request created successfully. Fee: ${fee} TON, Net transfer: ${netAmount.toFixed(8)} TON`,
+        message: `Withdrawal request created successfully. You will receive ${Math.floor(netAmount)} SAT.`,
         withdrawalId: withdrawal.id
       };
     } catch (error) {
@@ -1903,39 +1902,30 @@ export class DatabaseStorage implements IStorage {
         ? parseFloat(withdrawalDetails.totalDeducted) 
         : withdrawalAmount;
       
-      // ALL withdrawals use  balance (the method just indicates payment preference: TON, TON, STARS, etc.)
-      // This matches the withdrawal creation flow where all amounts are in TON
-      const currency = '';
-      const userBalance = parseFloat(user.tonBalance || '0');
-
-      // Handle balance deduction with support for legacy withdrawals
-      // Legacy withdrawals (created before the fix) already had balance deducted at request time
-      // New withdrawals have balance deducted only on approval
-      const bugDeducted = withdrawalDetails?.bugDeducted ? parseFloat(withdrawalDetails.bugDeducted) : 0;
-      const currentBugBalance = parseFloat(user.bugBalance || '0');
+      // ALL withdrawals use SAT balance
+      const currency = 'SAT';
+      const userBalance = parseFloat(user.balance || '0');
       
       if (userBalance >= totalToDeduct) {
-        // User has sufficient balance - this is a NEW withdrawal (or user earned more since request)
-        // Deduct balance now on approval
-        console.log(`💰 Deducting TON balance now for approved withdrawal`);
-        console.log(`💰 Net amount: TON${withdrawalAmount}, Total to deduct (with fee): TON${totalToDeduct}`);
-        console.log(`💰 Previous TON balance: ${userBalance}, New balance: ${(userBalance - totalToDeduct).toFixed(10)}`);
+        // Deduct SAT balance on approval
+        console.log(`💰 Deducting SAT balance now for approved withdrawal`);
+        console.log(`💰 Net amount: ${withdrawalAmount} SAT, Total to deduct (with fee): ${totalToDeduct} SAT`);
+        console.log(`💰 Previous SAT balance: ${userBalance}, New balance: ${(userBalance - totalToDeduct).toFixed(2)}`);
 
-        const newUsdBalance = (userBalance - totalToDeduct).toFixed(10);
+        const newBalance = (userBalance - totalToDeduct).toFixed(2);
         
         await db
           .update(users)
           .set({
-            tonBalance: newUsdBalance,
+            balance: newBalance,
             updatedAt: new Date()
           })
           .where(eq(users.id, withdrawal.userId));
-        console.log(`✅ TON balance deducted: ${userBalance} → ${newUsdBalance}`);
+        console.log(`✅ SAT balance deducted: ${userBalance} → ${newBalance}`);
       } else {
-        // User doesn't have sufficient balance - this is a LEGACY withdrawal
-        // Balance was already deducted at request time (old flow), so just approve without deducting again
+        // Legacy withdrawal — balance already deducted at request time, just approve
         console.log(`⚠️ Legacy withdrawal detected - balance was already deducted at request time`);
-        console.log(`💰 Current  balance: ${userBalance}, Required: ${totalToDeduct}`);
+        console.log(`💰 Current SAT balance: ${userBalance}, Required: ${totalToDeduct}`);
         console.log(`✅ Approving without additional balance deduction (legacy flow)`);
       }
 
@@ -2014,31 +2004,21 @@ export class DatabaseStorage implements IStorage {
         ? parseFloat(withdrawalDetails.totalDeducted) 
         : withdrawalAmount;
       const bugToRefund = withdrawalDetails?.bugDeducted ? parseFloat(withdrawalDetails.bugDeducted) : 0;
-      const currentUsdBalance = parseFloat(user.tonBalance || '0');
-      const currentBugBalance = parseFloat(user.bugBalance || '0');
+      const currentSatBalance = parseFloat(user.balance || '0');
       
-      // Check if this is a LEGACY withdrawal (balance was already deducted at request time)
-      // Legacy withdrawals have insufficient balance because it was already taken
-      // We detect this by checking if the user's balance is lower than expected
-      // For legacy withdrawals, we need to REFUND the balance
-      if (currentUsdBalance < totalToRefund) {
-        // LEGACY withdrawal - refund the balance that was already deducted
-        console.log(`⚠️ Legacy withdrawal detected - refunding balance that was deducted at request time`);
-        const newUsdBalance = (currentUsdBalance + totalToRefund).toFixed(10);
-        const newBugBalance = (currentBugBalance + bugToRefund).toFixed(10);
+      // For legacy withdrawals (pre-SAT), refund the SAT balance
+      if (currentSatBalance < totalToRefund) {
+        console.log(`⚠️ Legacy withdrawal detected - refunding SAT balance that was deducted at request time`);
+        const newSatBalance = (currentSatBalance + totalToRefund).toFixed(2);
         
         await db
           .update(users)
           .set({
-            tonBalance: newUsdBalance,
-            bugBalance: newBugBalance,
+            balance: newSatBalance,
             updatedAt: new Date()
           })
           .where(eq(users.id, withdrawal.userId));
-        console.log(`💰  balance refunded: ${currentUsdBalance} → ${newUsdBalance}`);
-        if (bugToRefund > 0) {
-          console.log(`💰 BUG balance refunded: ${currentBugBalance} → ${newBugBalance}`);
-        }
+        console.log(`💰 SAT balance refunded: ${currentSatBalance} → ${newSatBalance}`);
       } else {
         // NEW withdrawal - balance was never deducted, nothing to refund
         console.log(`❌ Withdrawal #${withdrawalId} rejected - no refund needed (balance was never deducted)`);

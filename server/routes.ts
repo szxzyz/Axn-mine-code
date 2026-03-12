@@ -398,8 +398,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       res.json({
-        minimum_withdrawal_ton: settingsMap['minimum_withdrawal_ton'] || '0.1',
-        withdrawal_fee_ton: settingsMap['withdrawal_fee_ton'] || '0.01',
+        minimum_withdrawal_sat: settingsMap['minimum_withdrawal_sat'] || '100',
+        withdrawal_fee_sat: settingsMap['withdrawal_fee_sat'] || '0',
+        minimum_withdrawal_ton: settingsMap['minimum_withdrawal_ton'] || '100',
+        withdrawal_fee_ton: settingsMap['withdrawal_fee_ton'] || '0',
         ad_section1_limit: settingsMap['ad_section1_limit'] || '250',
         ad_section2_limit: settingsMap['ad_section2_limit'] || '250',
         ad_section1_reward: settingsMap['ad_section1_reward'] || '0.0015',
@@ -407,8 +409,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.json({ 
-        minimum_withdrawal_ton: '0.1', 
-        withdrawal_fee_ton: '0.01',
+        minimum_withdrawal_sat: '100',
+        withdrawal_fee_sat: '0',
+        minimum_withdrawal_ton: '100', 
+        withdrawal_fee_ton: '0',
         ad_section1_limit: '250',
         ad_section2_limit: '250'
       });
@@ -487,14 +491,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user) return res.status(401).json({ message: "Not authenticated" });
       const { amount, address } = req.body;
       
-      const tonBalance = parseFloat(user.tonBalance || "0");
+      const satBalance = parseFloat(user.balance || "0");
       const withdrawAmount = parseFloat(String(amount));
       
-      if (withdrawAmount > tonBalance) {
-        return res.status(400).json({ message: "Insufficient balance" });
+      if (withdrawAmount > satBalance) {
+        return res.status(400).json({ message: "Insufficient SAT balance" });
       }
 
-      const result = await storage.createPayoutRequest(user.id, withdrawAmount.toString(), 'ton_coin', address);
+      const result = await storage.createPayoutRequest(user.id, withdrawAmount.toString(), 'sat_withdraw', address);
       if (!result.success) return res.status(400).json({ message: result.message });
 
       // Send real-time notification to admin
