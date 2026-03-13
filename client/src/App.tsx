@@ -38,8 +38,8 @@ function LoadingFallback() {
         <div className="relative w-20 h-20 flex items-center justify-center">
           <div className="absolute inset-0 rounded-full border border-[#F5C542]/20 animate-ping" />
           <div className="absolute inset-0 rounded-full border border-[#F5C542]/10" />
-          <div className="w-full h-full rounded-full bg-[#141414] border border-[#F5C542]/30 flex items-center justify-center shadow-lg">
-            <span className="text-[#F5C542] text-4xl font-black leading-none select-none">₿</span>
+          <div className="w-full h-full rounded-full overflow-hidden border border-[#F5C542]/30 shadow-lg">
+            <img src="/btc-icon.jpg" alt="Bitcoin" className="w-full h-full object-cover" />
           </div>
         </div>
         <div className="text-center">
@@ -389,8 +389,8 @@ function App() {
           <div className="relative w-20 h-20 flex items-center justify-center">
             <div className="absolute inset-0 rounded-full border border-[#F5C542]/20 animate-ping" />
             <div className="absolute inset-0 rounded-full border border-[#F5C542]/10" />
-            <div className="w-full h-full rounded-full bg-[#141414] border border-[#F5C542]/30 flex items-center justify-center shadow-lg">
-              <span className="text-[#F5C542] text-4xl font-black leading-none select-none">₿</span>
+            <div className="w-full h-full rounded-full overflow-hidden border border-[#F5C542]/30 shadow-lg">
+              <img src="/btc-icon.jpg" alt="Bitcoin" className="w-full h-full object-cover" />
             </div>
           </div>
 
