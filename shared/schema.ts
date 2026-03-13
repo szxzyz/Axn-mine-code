@@ -412,6 +412,20 @@ export type PromoCodeUsage = typeof promoCodeUsage.$inferSelect;
 export type InsertPromoCodeUsage = z.infer<typeof insertPromoCodeUsageSchema>;
 export type Transaction = typeof transactions.$inferSelect;
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
+
+// SAT Transfers table
+export const satTransfers = pgTable("sat_transfers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  senderId: varchar("sender_id").references(() => users.id).notNull(),
+  receiverId: varchar("receiver_id").references(() => users.id).notNull(),
+  amount: decimal("amount", { precision: 20, scale: 0 }).notNull(),
+  note: text("note"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertSatTransferSchema = createInsertSchema(satTransfers).omit({ id: true, createdAt: true });
+export type SatTransfer = typeof satTransfers.$inferSelect;
+export type InsertSatTransfer = z.infer<typeof insertSatTransferSchema>;
 export type UserBalance = typeof userBalances.$inferSelect;
 export type InsertUserBalance = z.infer<typeof insertUserBalanceSchema>;
 export type DailyTask = typeof dailyTasks.$inferSelect;
