@@ -682,14 +682,14 @@ export async function sendSharePhotoToChat(
 
 export async function formatWelcomeMessage(): Promise<{ message: string; inlineKeyboard: any }> {
   const botUsername = await getBotUsername();
-  const channelUrl = 'https://t.me/MoneyAdz';
+  const channelUrl = 'https://t.me/Lightiningsat';
   const groupUrl = 'https://t.me/LightningSatCommunity';
   
   const message = `🚀 It's Time to Start Mining Sats\n\n` +
                  `The journey has begun.\n` +
                  `Who knows how many Satoshis you'll earn, how fast your balance will grow, or who you'll invite along the way?\n\n` +
                  `One thing is certain: the earning journey has started.\n\n` +
-                 `⚡ Watch ads to boost your speed\n` +
+                 `⚡ Mine daily to boost your earnings\n` +
                  `👥 Invite friends and earn together\n` +
                  `💰 Collect Sats and withdraw anytime\n\n` +
                  `Join now and don't miss your chance to start stacking Satoshi.`;
@@ -881,9 +881,9 @@ export async function handleInlineQuery(inlineQuery: any): Promise<boolean> {
         id: `share_${user.referralCode}_${Date.now()}`,
         photo_url: shareImageUrl,
         thumbnail_url: shareImageUrl,
-        title: '💵 Get Paid with Money Adz!',
-        description: 'Join Money Adz and earn SAT (Bitcoin) by watching ads or completing simple tasks!',
-        caption: '💵 Get paid for completing tasks and watching ads.',
+        title: '⛏️ Start Mining — Earn SAT!',
+        description: 'Join and earn SAT (Bitcoin) by mining daily and completing simple tasks!',
+        caption: '⛏️ Mine daily and earn real Bitcoin (SAT).',
         parse_mode: 'HTML',
         reply_markup: {
           inline_keyboard: [
@@ -904,7 +904,7 @@ export async function handleInlineQuery(inlineQuery: any): Promise<boolean> {
         description: 'Share and earn bonus Hrum for every friend who joins!',
         thumbnail_url: shareImageUrl,
         input_message_content: {
-          message_text: '💵 <b>Get paid for completing tasks and watching ads.</b>\n\n🎯 Join Money Adz and get rewarded for simple tasks!\n\n👇 Click the button below to start earning:',
+          message_text: '⛏️ <b>Mine-to-Earn — Start Mining SAT Today!</b>\n\n🎯 Join and earn Bitcoin (SAT) by mining daily and completing simple tasks!\n\n👇 Click the button below to start mining:',
           parse_mode: 'HTML'
         },
         reply_markup: {
@@ -1112,15 +1112,21 @@ Share your unique referral link and earn Hrum when your friends join:
           const approvedRequests = approvedWithdrawalsCount[0]?.count || 0;
           const rejectedRequests = rejectedWithdrawalsCount[0]?.count || 0;
           
+          // Fetch channel join requirement setting
+          const refreshAllSettings = await storage.getAllAdminSettings().catch(() => []);
+          const refreshChannelJoinSetting = refreshAllSettings.find(s => s.settingKey === 'channel_join_required');
+          const refreshChannelJoinEnabled = refreshChannelJoinSetting ? refreshChannelJoinSetting.settingValue !== 'false' : true;
+          const refreshChannelJoinStatus = refreshChannelJoinEnabled ? '🟢 ON' : '🔴 OFF';
+
           const adminPanelMessage = 
-            `🎛 <b>CASHWATCH ADMIN PANEL</b>\n` +
+            `🎛 <b>MINING APP ADMIN PANEL</b>\n` +
             `━━━━━━━━━━━━━━━━━━━━━━\n\n` +
             
             `👥 <b>USERS</b>\n` +
             `┌ Total  ∙ <code>${totalUsers.toLocaleString()}</code>\n` +
             `└ Active ∙ <code>${activeUsers.toLocaleString()}</code>\n\n` +
             
-            `🎬 <b>AD VIEWS</b>\n` +
+            `⛏️ <b>MINING SESSIONS</b>\n` +
             `┌ Total     ∙ <code>${totalAds.toLocaleString()}</code>\n` +
             `├ Today     ∙ <code>${todayAds.toLocaleString()}</code>\n` +
             `└ Yesterday ∙ <code>${yesterdayAds.toLocaleString()}</code>\n\n` +
@@ -1144,6 +1150,8 @@ Share your unique referral link and earn Hrum when your friends join:
             `┌ ✅ Approved ∙ <code>${approvedRequests}</code>\n` +
             `├ ❌ Rejected ∙ <code>${rejectedRequests}</code>\n` +
             `└ ⏳ Pending  ∙ <code>${pendingRequests}</code>\n\n` +
+
+            `🔒 <b>CHANNEL JOIN</b> ∙ ${refreshChannelJoinStatus}\n\n` +
             
             `━━━━━━━━━━━━━━━━━━━━━━\n` +
             `🕐 ${new Date().toLocaleString('en-US', { timeZone: 'UTC', dateStyle: 'short', timeStyle: 'short' })} UTC`;
@@ -1168,6 +1176,7 @@ Share your unique referral link and earn Hrum when your friends join:
                   [{ text: '💰 Pending Withdrawals', callback_data: 'admin_pending_withdrawals' }],
                   [{ text: '🔔 Announcement', callback_data: 'admin_announce' }],
                   [{ text: '📊 Advertise', callback_data: 'admin_advertise' }],
+                  [{ text: refreshChannelJoinEnabled ? '🔒 Channel Join: ON  ✅' : '🔓 Channel Join: OFF ❌', callback_data: 'toggle_channel_join' }],
                   [{ text: '🔄 Refresh', callback_data: 'admin_refresh' }]
                 ]
               }
@@ -1387,6 +1396,43 @@ ${walletAddress}
         return true;
       }
       
+      // Handle channel join requirement toggle
+      if (data === 'toggle_channel_join' && isAdmin(chatId)) {
+        try {
+          const toggleSettings = await storage.getAllAdminSettings().catch(() => []);
+          const toggleJoinSetting = toggleSettings.find(s => s.settingKey === 'channel_join_required');
+          const currentEnabled = toggleJoinSetting ? toggleJoinSetting.settingValue !== 'false' : true;
+          const newValue = !currentEnabled;
+
+          await storage.updateAdminSetting('channel_join_required', newValue.toString());
+
+          const statusText = newValue ? '🟢 Channel Join: ON\n\nUsers must join Channel & Group to access the app.' : '🔴 Channel Join: OFF\n\nUsers can access the app directly without joining.';
+
+          await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              callback_query_id: callbackQuery.id, 
+              text: newValue ? '✅ Channel Join turned ON' : '✅ Channel Join turned OFF',
+              show_alert: true
+            })
+          });
+
+          // Send updated status message
+          await sendUserTelegramNotification(chatId, 
+            `⚙️ <b>Setting Updated</b>\n\n${statusText}\n\nUse /szxzyz to view updated admin panel.`
+          );
+        } catch (error) {
+          console.error('❌ Error toggling channel join:', error);
+          await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ callback_query_id: callbackQuery.id, text: '❌ Error updating setting', show_alert: true })
+          });
+        }
+        return true;
+      }
+
       // Handle cancel broadcast button
       if (data === 'cancel_broadcast' && isAdmin(chatId)) {
         // Clear pending broadcast state
@@ -1996,15 +2042,21 @@ ${walletAddress}
         const approvedRequests = approvedWithdrawalsCount[0]?.count || 0;
         const rejectedRequests = rejectedWithdrawalsCount[0]?.count || 0;
         
+        // Fetch channel join requirement setting
+        const allAdminSettings = await storage.getAllAdminSettings().catch(() => []);
+        const channelJoinSetting = allAdminSettings.find(s => s.settingKey === 'channel_join_required');
+        const channelJoinEnabled = channelJoinSetting ? channelJoinSetting.settingValue !== 'false' : true;
+        const channelJoinStatus = channelJoinEnabled ? '🟢 ON' : '🔴 OFF';
+
         const adminPanelMessage = 
-          `🎛 <b>CASHWATCH ADMIN PANEL</b>\n` +
+          `🎛 <b>MINING APP ADMIN PANEL</b>\n` +
           `━━━━━━━━━━━━━━━━━━━━━━\n\n` +
           
           `👥 <b>USERS</b>\n` +
           `┌ Total  ∙ <code>${totalUsers.toLocaleString()}</code>\n` +
           `└ Active ∙ <code>${activeUsers.toLocaleString()}</code>\n\n` +
           
-          `🎬 <b>AD VIEWS</b>\n` +
+          `⛏️ <b>MINING SESSIONS</b>\n` +
           `┌ Total     ∙ <code>${totalAds.toLocaleString()}</code>\n` +
           `├ Today     ∙ <code>${todayAds.toLocaleString()}</code>\n` +
           `└ Yesterday ∙ <code>${yesterdayAds.toLocaleString()}</code>\n\n` +
@@ -2028,7 +2080,9 @@ ${walletAddress}
           `┌ ✅ Approved ∙ <code>${approvedRequests}</code>\n` +
           `├ ❌ Rejected ∙ <code>${rejectedRequests}</code>\n` +
           `└ ⏳ Pending  ∙ <code>${pendingRequests}</code>\n\n` +
-          
+
+          `🔒 <b>CHANNEL JOIN</b> ∙ ${channelJoinStatus}\n\n` +
+
           `━━━━━━━━━━━━━━━━━━━━━━\n` +
           `🕐 ${new Date().toLocaleString('en-US', { timeZone: 'UTC', dateStyle: 'short', timeStyle: 'short' })} UTC`;
         
@@ -2045,6 +2099,7 @@ ${walletAddress}
                 [{ text: '💰 Pending Withdrawals', callback_data: 'admin_pending_withdrawals' }],
                 [{ text: '🔔 Announcement', callback_data: 'admin_announce' }],
                 [{ text: '📊 Advertise', callback_data: 'admin_advertise' }],
+                [{ text: channelJoinEnabled ? '🔒 Channel Join: ON  ✅' : '🔓 Channel Join: OFF ❌', callback_data: 'toggle_channel_join' }],
                 [{ text: '🔄 Refresh', callback_data: 'admin_refresh' }]
               ]
             }

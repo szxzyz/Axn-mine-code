@@ -946,6 +946,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const isDevMode = process.env.NODE_ENV === 'development';
       const channelConfig = getChannelConfig();
+
+      // Check if channel join requirement is enabled
+      const allSettings = await storage.getAllAdminSettings();
+      const channelJoinSetting = allSettings.find(s => s.settingKey === 'channel_join_required');
+      const channelJoinRequired = channelJoinSetting ? channelJoinSetting.settingValue !== 'false' : true;
+
+      // If channel join requirement is disabled, let everyone in
+      if (!channelJoinRequired) {
+        console.log('🔧 Channel join requirement is OFF - granting access');
+        return res.json({
+          success: true,
+          isVerified: true,
+          channelMember: true,
+          groupMember: true,
+          channelUrl: channelConfig.channelUrl,
+          groupUrl: channelConfig.groupUrl,
+          channelName: channelConfig.channelName,
+          groupName: channelConfig.groupName
+        });
+      }
       
       // In dev mode, skip verification to allow easy testing
       if (isDevMode) {
