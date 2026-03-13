@@ -11,7 +11,7 @@ import { SettingsPopup } from "@/components/SettingsPopup";
 import InvitePopup from "@/components/InvitePopup";
 import { useLanguage } from "@/hooks/useLanguage";
 import { MatrixMiningCounter } from "@/components/MatrixMiningCounter";
-import { Award, Wallet, RefreshCw, Flame, Ticket, Info, User as UserIcon, Clock, Loader2, Gift, Rocket, X, Bug, DollarSign, Coins, Send, Users, Check, ExternalLink, Plus, CalendarCheck, Bell, Star, Play, Zap, Settings, Film, Tv, ClipboardList, UserPlus, Share2, Copy, HandCoins, LogOut, Download, ShieldCheck } from "lucide-react";
+import { Award, Wallet, RefreshCw, Flame, Ticket, Info, User as UserIcon, Clock, Loader2, Gift, Rocket, X, Bug, DollarSign, Coins, Send, Users, Check, ExternalLink, Plus, CalendarCheck, Bell, Star, Play, Zap, Settings, Film, Tv, ClipboardList, UserPlus, Share2, Copy, HandCoins, LogOut, Download, ShieldCheck, QrCode, ArrowDown } from "lucide-react";
 import { DiamondIcon } from "@/components/DiamondIcon";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -1274,51 +1274,89 @@ export default function Home() {
                   </Button>
                 </div>
 
-                {/* 4 Action Buttons Row — wallet style */}
-                <div className="flex gap-2 pt-4 border-t border-white/5">
-                  {/* Send — dark outer */}
-                  <button
-                    onClick={() => setSendPopupOpen(true)}
-                    className="flex flex-col items-center justify-center gap-2 flex-1 bg-[#111] hover:bg-[#1a1a1a] border border-white/10 rounded-2xl py-4 transition-all active:scale-95 shadow-inner"
-                  >
-                    <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-                      <Send className="w-4 h-4 text-white/70" />
-                    </div>
-                    <span className="text-white/60 text-[9px] font-black uppercase tracking-widest">Send</span>
-                  </button>
+                {/* 4 Action Buttons Row — futuristic tab style */}
+                <div className="flex gap-1.5 pt-4 border-t border-white/5">
 
-                  {/* Withdraw — lime highlight */}
-                  <button
-                    onClick={() => setWithdrawPopupOpen(true)}
-                    className="flex flex-col items-center justify-center gap-2 flex-1 bg-[#B9FF66] hover:bg-[#c8ff7a] rounded-2xl py-4 transition-all active:scale-95 shadow-lg shadow-[#B9FF66]/20"
-                  >
-                    <div className="w-9 h-9 rounded-xl bg-black/15 flex items-center justify-center">
-                      <Download className="w-4 h-4 text-black" />
-                    </div>
-                    <span className="text-black text-[9px] font-black uppercase tracking-widest">Withdraw</span>
-                  </button>
-
-                  {/* Promo — lime highlight */}
-                  <button
-                    onClick={() => setPromoPopupOpen(true)}
-                    className="flex flex-col items-center justify-center gap-2 flex-1 bg-[#B9FF66] hover:bg-[#c8ff7a] rounded-2xl py-4 transition-all active:scale-95 shadow-lg shadow-[#B9FF66]/20"
-                  >
-                    <div className="w-9 h-9 rounded-xl bg-black/15 flex items-center justify-center">
-                      <Ticket className="w-4 h-4 text-black" />
-                    </div>
-                    <span className="text-black text-[9px] font-black uppercase tracking-widest">Promo</span>
-                  </button>
-
-                  {/* Receive — dark outer */}
+                  {/* Receive — dark outer left */}
                   <button
                     onClick={() => setReceivePopupOpen(true)}
-                    className="flex flex-col items-center justify-center gap-2 flex-1 bg-[#111] hover:bg-[#1a1a1a] border border-white/10 rounded-2xl py-4 transition-all active:scale-95 shadow-inner"
+                    className="flex flex-col items-center justify-center gap-2 flex-1 rounded-2xl py-5 px-2 transition-all active:scale-95"
+                    style={{
+                      background: 'linear-gradient(175deg, #333 0%, #1c1c1c 60%, #141414 100%)',
+                      boxShadow: '0 8px 20px rgba(0,0,0,0.7), inset 0 1.5px 0 rgba(255,255,255,0.1), inset 0 -3px 6px rgba(0,0,0,0.5)',
+                    }}
                   >
-                    <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-                      <Download className="w-4 h-4 text-white/70 rotate-180" />
+                    <div className="flex flex-col items-center gap-0.5">
+                      <QrCode className="w-6 h-6 text-white/80" />
+                      <ArrowDown className="w-3 h-3 text-white/50 -mt-1" />
                     </div>
                     <span className="text-white/60 text-[9px] font-black uppercase tracking-widest">Receive</span>
                   </button>
+
+                  {/* Send — lime left tab, fake notch at top-right */}
+                  <button
+                    onClick={() => setSendPopupOpen(true)}
+                    className="relative flex items-center justify-center flex-1 transition-all active:scale-95"
+                    style={{
+                      background: 'linear-gradient(170deg, #e0ff4a 0%, #c6ff00 50%, #aee600 100%)',
+                      borderRadius: '14px 0 14px 14px',
+                      minHeight: '82px',
+                      boxShadow: '0 8px 22px rgba(180,240,0,0.45), inset 0 2px 0 rgba(255,255,255,0.5), inset 0 -3px 6px rgba(0,0,0,0.15)',
+                    }}
+                  >
+                    {/* Fake concave notch: dark overlay at top-right corner */}
+                    <div
+                      className="absolute top-0 right-0 pointer-events-none"
+                      style={{
+                        width: '40%',
+                        height: '40%',
+                        background: '#141414',
+                        borderBottomLeftRadius: '14px',
+                      }}
+                    />
+                    <ExternalLink className="w-5 h-5 text-black/75 relative z-10" strokeWidth={2} />
+                  </button>
+
+                  {/* Withdraw — lime right tab, fake notch at top-left */}
+                  <button
+                    onClick={() => setWithdrawPopupOpen(true)}
+                    className="relative flex items-center justify-center flex-1 transition-all active:scale-95"
+                    style={{
+                      background: 'linear-gradient(170deg, #e0ff4a 0%, #c6ff00 50%, #aee600 100%)',
+                      borderRadius: '0 14px 14px 14px',
+                      minHeight: '82px',
+                      boxShadow: '0 8px 22px rgba(180,240,0,0.45), inset 0 2px 0 rgba(255,255,255,0.5), inset 0 -3px 6px rgba(0,0,0,0.15)',
+                    }}
+                  >
+                    {/* Fake concave notch: dark overlay at top-left corner */}
+                    <div
+                      className="absolute top-0 left-0 pointer-events-none"
+                      style={{
+                        width: '40%',
+                        height: '40%',
+                        background: '#141414',
+                        borderBottomRightRadius: '14px',
+                      }}
+                    />
+                    <ArrowDown className="w-5 h-5 text-black/75 relative z-10" strokeWidth={2.5} />
+                  </button>
+
+                  {/* Promo — dark outer right */}
+                  <button
+                    onClick={() => setPromoPopupOpen(true)}
+                    className="flex flex-col items-center justify-center gap-2 flex-1 rounded-2xl py-5 px-2 transition-all active:scale-95"
+                    style={{
+                      background: 'linear-gradient(175deg, #333 0%, #1c1c1c 60%, #141414 100%)',
+                      boxShadow: '0 8px 20px rgba(0,0,0,0.7), inset 0 1.5px 0 rgba(255,255,255,0.1), inset 0 -3px 6px rgba(0,0,0,0.5)',
+                    }}
+                  >
+                    <div className="relative flex items-center justify-center">
+                      <Gift className="w-6 h-6 text-white/80" />
+                      <Star className="w-3 h-3 text-yellow-300/80 fill-yellow-300/60 absolute -top-2 -right-2" />
+                    </div>
+                    <span className="text-white/60 text-[9px] font-black uppercase tracking-widest">Promo</span>
+                  </button>
+
                 </div>
               </div>
 
