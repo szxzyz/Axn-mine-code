@@ -32,11 +32,7 @@ const PageLoader = memo(function PageLoader() {
 
 function Router() {
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center min-h-screen bg-[#050505]">
-        <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
-      </div>
-    }>
+    <Suspense fallback={null}>
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/task/create" component={CreateTask} />
@@ -175,11 +171,7 @@ function App() {
   const isDevMode = import.meta.env.DEV || import.meta.env.MODE === 'development';
 
   useEffect(() => {
-    // Show loading screen for a shorter time or remove if not needed
-    const timer = setTimeout(() => {
-      setShowLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
+    setShowLoading(false);
   }, []);
 
   const checkMembership = useCallback(async () => {
@@ -367,50 +359,37 @@ function App() {
 
   if (isCheckingCountry || isAuthenticating || isCheckingMembership || showLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#050505] overflow-hidden">
-        {/* Animated Background Elements */}
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[120px] animate-pulse"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '1s' }}></div>
-        
-        <div className="relative flex flex-col items-center">
-          {/* Logo Container with multiple glow layers */}
-          <div className="relative w-28 h-28 mb-8">
-            <div className="absolute inset-0 rounded-full bg-blue-500/20 blur-md animate-ping"></div>
-            <div className="absolute inset-[-4px] rounded-full bg-gradient-to-tr from-blue-600 via-transparent to-blue-400 opacity-30 animate-spin-slow"></div>
-            <div className="absolute inset-0 rounded-full border border-white/10"></div>
-            
-            <img 
-              src="/images/axn-logo.jpg" 
-              alt="AXN" 
-              className="w-full h-full object-cover rounded-full border-2 border-white/20 relative z-10 shadow-2xl"
-            />
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#0a0a0a]">
+        {/* Subtle glow */}
+        <div className="absolute w-64 h-64 bg-[#F5C542]/5 rounded-full blur-[100px]" />
+
+        <div className="relative flex flex-col items-center gap-6 z-10">
+          {/* Bitcoin icon ring */}
+          <div className="relative w-20 h-20 flex items-center justify-center">
+            <div className="absolute inset-0 rounded-full border border-[#F5C542]/20 animate-ping" />
+            <div className="absolute inset-0 rounded-full border border-[#F5C542]/10" />
+            <div className="w-full h-full rounded-full bg-[#141414] border border-[#F5C542]/30 flex items-center justify-center shadow-lg">
+              <span className="text-[#F5C542] text-4xl font-black leading-none select-none">₿</span>
+            </div>
           </div>
 
-          {/* Text Elements */}
-          <div className="text-center relative z-10">
-            <h2 className="text-white font-black text-xl tracking-[0.2em] uppercase mb-2 animate-pulse">
-              Money AXN
-            </h2>
-            <div className="flex items-center justify-center gap-2">
-              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce"></div>
-              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
-            </div>
-            <p className="text-blue-500/60 text-[10px] font-black uppercase tracking-widest mt-4 italic">
-              Loading your earnings...
+          {/* App name */}
+          <div className="text-center">
+            <h1 className="text-white font-black text-lg tracking-widest uppercase">
+              Lightning Sats
+            </h1>
+            <p className="text-[#8E8E93] text-[10px] font-semibold uppercase tracking-widest mt-1">
+              Mine · Earn · Withdraw
             </p>
           </div>
-        </div>
 
-        <style dangerouslySetInnerHTML={{ __html: `
-          @keyframes spin-slow {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
-          .animate-spin-slow {
-            animation: spin-slow 8s linear infinite;
-          }
-        `}} />
+          {/* Loading dots */}
+          <div className="flex items-center gap-1.5 mt-2">
+            <div className="w-1.5 h-1.5 bg-[#F5C542] rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
+            <div className="w-1.5 h-1.5 bg-[#F5C542] rounded-full animate-bounce" style={{ animationDelay: '0.15s' }} />
+            <div className="w-1.5 h-1.5 bg-[#F5C542] rounded-full animate-bounce" style={{ animationDelay: '0.3s' }} />
+          </div>
+        </div>
       </div>
     );
   }
