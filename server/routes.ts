@@ -9583,5 +9583,66 @@ ${walletAddress}
     }
   });
 
+  // Bitcoin price proxy - fetches from CoinGecko server-side to avoid browser CORS/network blocks
+  let btcPriceCache: { price: number; change24h: number; history: number[]; ts: number } | null = null;
+
+  app.get('/api/btc-price', async (_req, res) => {
+    try {
+      const now = Date.now();
+      if (btcPriceCache && now - btcPriceCache.ts < 30000) {
+        return res.json({ success: true, ...btcPriceCache });
+      }
+
+      // Use Binance public API (no key required, reliable)
+      const [tickerRes, klinesRes] = await Promise.all([
+        fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT'),
+        fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=24')
+      ]);
+
+      if (!tickerRes.ok || !klinesRes.ok) {
+        return res.status(502).json({ success: false, message: 'Upstream error' });
+      }
+
+      const ticker = await tickerRes.json() as any;
+      const klines = await klinesRes.json() as any[];
+
+      const price: number = parseFloat(ticker.lastPrice);
+      const change24h: number = parseFloat(ticker.priceChangePercent);
+      // klines: [openTime, open, high, low, close, ...]
+      const history: number[] = klines.map((k: any[]) => parseFloat(k[4]));
+
+      btcPriceCache = { price, change24h, history, ts: now };
+      return res.json({ success: true, price, change24h, history });
+    } catch (err) {
+      console.error('BTC price fetch error:', err);
+      return res.status(500).json({ success: false, message: 'Failed to fetch price' });
+    }
+  });
+
+  // Live BTC price only (lightweight, 30s polling)
+  app.get('/api/btc-price/live', async (_req, res) => {
+    try {
+      const liveRes = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
+      if (!liveRes.ok) return res.status(502).json({ success: false });
+      const data = await liveRes.json() as any;
+      const price: number = parseFloat(data.price);
+
+      // Get 24h change separately
+      let change24h = btcPriceCache?.change24h ?? 0;
+      try {
+        const changeRes = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT');
+        if (changeRes.ok) {
+          const changeData = await changeRes.json() as any;
+          change24h = parseFloat(changeData.priceChangePercent);
+        }
+      } catch {}
+
+      if (btcPriceCache) btcPriceCache = { ...btcPriceCache, price, change24h, ts: Date.now() };
+      return res.json({ success: true, price, change24h });
+    } catch {
+      return res.status(500).json({ success: false });
+    }
+  });
+
   return httpServer;
 }
