@@ -80,7 +80,11 @@ export default function WithdrawalPopup({ open, onOpenChange, tonBalance }: With
       return;
     }
     if (!withdrawAddress.trim()) {
-      showNotification("Please enter your withdrawal address (Bitcoin / Lightning / FaucetPay)", "error");
+      showNotification("Please enter your destination address", "error");
+      return;
+    }
+    if (!withdrawAddress.trim().endsWith("@speed.app")) {
+      showNotification("Address must end with @speed.app (e.g. username@speed.app)", "error");
       return;
     }
     withdrawMutation.mutate();
@@ -134,11 +138,27 @@ export default function WithdrawalPopup({ open, onOpenChange, tonBalance }: With
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-white/40 text-[10px] font-black uppercase tracking-widest">
-                  Wallet Address
-                </Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-white/40 text-[10px] font-black uppercase tracking-widest">
+                    Destination address
+                  </Label>
+                  <a
+                    href="https://links.speed.app/referral?referral_code=CH265L"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-yellow-400 text-[10px] font-semibold hover:text-yellow-300 transition-colors underline underline-offset-2"
+                    onClick={(e) => {
+                      if (window.Telegram?.WebApp) {
+                        e.preventDefault();
+                        window.Telegram.WebApp.openLink("https://links.speed.app/referral?referral_code=CH265L");
+                      }
+                    }}
+                  >
+                    Don't have an address yet?
+                  </a>
+                </div>
                 <Input
-                  placeholder="Bitcoin / Lightning / FaucetPay address"
+                  placeholder="lightning"
                   value={withdrawAddress}
                   onChange={(e) => setWithdrawAddress(e.target.value)}
                   className="bg-white/5 border-white/10 text-white h-11 rounded-xl focus:ring-yellow-400/30 font-medium text-sm placeholder:text-white/20 placeholder:text-xs"

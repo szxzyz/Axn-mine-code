@@ -57,8 +57,11 @@ export default function InvitePopup({ onClose }: InvitePopupProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const botUsername =
-    (import.meta.env.VITE_BOT_USERNAME as string) || "MoneyAdzbot";
+  const { data: botInfo } = useQuery<{ username: string }>({
+    queryKey: ['/api/bot-info'],
+    staleTime: 60 * 60 * 1000,
+  });
+  const botUsername = botInfo?.username || "bot";
   const referralLink = user?.referralCode
     ? `https://t.me/${botUsername}?start=${user.referralCode}`
     : "";
