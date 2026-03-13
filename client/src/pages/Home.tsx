@@ -42,12 +42,14 @@ interface UnifiedTask {
 
 declare global {
   interface Window {
+    show_9368336: (type?: string | { type: string; inAppSettings: any }) => Promise<void>;
     show_10401872: (type?: string | { type: string; inAppSettings: any }) => Promise<void>;
     Adsgram: {
       init: (config: { blockId: string }) => {
         show: () => Promise<void>;
       };
     };
+    showGiga: (placement: string) => Promise<void>;
   }
 }
 
@@ -1126,7 +1128,7 @@ export default function Home() {
 
   return (
     <Layout>
-      <main className="max-w-md mx-auto px-4 pt-12 pb-0">
+      <main className="max-w-md mx-auto px-4 pt-4 pb-0">
         {/* Unified Profile & Balance Section */}
         <div className="mb-4 relative">
           <div className="flex justify-between items-center mb-4">
@@ -1172,7 +1174,7 @@ export default function Home() {
             <div className="flex flex-col items-center flex-1">
               <span className="text-[#8E8E93] text-[9px] font-semibold uppercase tracking-wider mb-0.5">Total SAT Mined</span>
               <div className="flex items-center gap-1.5 leading-none">
-                <span className="text-[#F5C542] text-base font-black">₿</span>
+                <img src="/sat-icon.png" alt="SAT" className="w-4 h-4 rounded-full object-cover" />
                 <span className="text-white text-base font-black tabular-nums">
                   {Math.floor(parseFloat(user?.balance || "0")).toLocaleString()}
                 </span>
@@ -1183,7 +1185,7 @@ export default function Home() {
             <div className="flex flex-col items-center flex-1">
               <span className="text-[#8E8E93] text-[9px] font-semibold uppercase tracking-wider mb-0.5">Mining Rate</span>
               <div className="flex items-center gap-1.5 leading-none">
-                <Zap className="w-3 h-3 text-blue-400" />
+                <img src="/mining-icon.png" alt="mining" className="w-4 h-4 object-contain" style={{ filter: 'drop-shadow(0 0 3px rgba(255,165,0,0.9)) brightness(1.4)' }} />
                 <span className="text-white text-base font-black tabular-nums">
                   {miningRatePerHour.toFixed(4)}
                 </span>
