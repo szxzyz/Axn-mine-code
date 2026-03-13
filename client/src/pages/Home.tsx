@@ -996,7 +996,7 @@ export default function Home() {
   const handleShareWithFriends = useCallback(() => {
     if (!referralLink) return;
     const tgWebApp = (window as any).Telegram?.WebApp;
-    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent("Join me on CashWatch and earn rewards together!")}`;
+    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent("Join me on this Mine-to-Earn app and start stacking SAT together!")}`;
     if (tgWebApp?.openTelegramLink) {
       tgWebApp.openTelegramLink(shareUrl);
     } else {
@@ -1069,7 +1069,7 @@ export default function Home() {
   const handleCheckForUpdates = useCallback(() => {
     if (missionStatus?.checkForUpdates?.claimed || checkForUpdatesStep !== 'idle') return;
     const tgWebApp = (window as any).Telegram?.WebApp;
-    const channelUrl = 'https://t.me/MoneyAdz';
+    const channelUrl = 'https://t.me/Lightiningsat';
     if (tgWebApp?.openTelegramLink) {
       tgWebApp.openTelegramLink(channelUrl);
     } else if (tgWebApp?.openLink) {

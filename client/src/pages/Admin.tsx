@@ -208,14 +208,14 @@ export default function AdminPage() {
                     iconColor="text-emerald-400"
                   />
                   <StatCard 
-                    icon="play-circle" 
-                    label="Total Ads" 
+                    icon="hammer" 
+                    label="Total Mining" 
                     value={stats?.totalAdsWatched?.toLocaleString() || '0'} 
                     iconColor="text-purple-400"
                   />
                   <StatCard 
                     icon="bolt" 
-                    label="Ads Today" 
+                    label="Mining Today" 
                     value={stats?.todayAdsWatched?.toLocaleString() || '0'} 
                     iconColor="text-amber-400"
                   />
@@ -1434,7 +1434,7 @@ function BanLogsSection() {
   );
 }
 
-type SettingsCategory = 'ads' | 'affiliates' | 'withdrawals' | 'tasks' | 'other';
+type SettingsCategory = 'mining' | 'ads' | 'affiliates' | 'withdrawals' | 'tasks' | 'bug' | 'other';
 
 function SettingsSection() {
   const { toast } = useToast();
@@ -1486,7 +1486,8 @@ function SettingsSection() {
     ad_section1_reward: '0.0015',
     ad_section1_limit: '250',
     ad_section2_reward: '0.0001',
-    ad_section2_limit: '250'
+    ad_section2_limit: '250',
+    channelJoinRequired: true
   });
   
   useEffect(() => {
@@ -1530,7 +1531,8 @@ function SettingsSection() {
         ad_section1_reward: settingsData.ad_section1_reward?.toString() || '0.0015',
         ad_section1_limit: settingsData.ad_section1_limit?.toString() || '250',
         ad_section2_reward: settingsData.ad_section2_reward?.toString() || '0.0001',
-        ad_section2_limit: settingsData.ad_section2_limit?.toString() || '250'
+        ad_section2_limit: settingsData.ad_section2_limit?.toString() || '250',
+        channelJoinRequired: settingsData.channel_join_required !== false
       });
     }
   }, [settingsData]);
@@ -1601,6 +1603,7 @@ function SettingsSection() {
         ad_section1_limit: settings.ad_section1_limit?.toString() || '250',
         ad_section2_reward: settings.ad_section2_reward?.toString() || '0.0001',
         ad_section2_limit: settings.ad_section2_limit?.toString() || '250',
+        channel_join_required: !!settings.channelJoinRequired,
       };
 
       const res = await apiRequest("PUT", "/api/admin/settings", payload);
@@ -2267,6 +2270,33 @@ function SettingsSection() {
               </div>
               <p className="text-xs text-muted-foreground">
                 {settings.seasonBroadcastActive ? 'Active' : 'Inactive'}
+              </p>
+            </div>
+
+            <div className="space-y-2 p-3 border rounded-lg bg-cyan-50/5 border-cyan-500/20 md:col-span-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold">
+                  <i className="fas fa-door-open mr-2 text-cyan-400"></i>
+                  Channel Join Requirement
+                </Label>
+                <button
+                  type="button"
+                  onClick={() => setSettings({ ...settings, channelJoinRequired: !settings.channelJoinRequired })}
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                    settings.channelJoinRequired ? 'bg-cyan-500' : 'bg-gray-600'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                      settings.channelJoinRequired ? 'translate-x-5' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {settings.channelJoinRequired
+                  ? 'ON — Users must join Channel & Group to access the app'
+                  : 'OFF — Users can access the app directly without joining'}
               </p>
             </div>
 
