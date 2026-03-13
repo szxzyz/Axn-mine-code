@@ -30,9 +30,35 @@ const PageLoader = memo(function PageLoader() {
   return null;
 });
 
+function LoadingFallback() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-[#0a0a0a]">
+      <div className="absolute w-64 h-64 bg-[#F5C542]/5 rounded-full blur-[100px]" />
+      <div className="relative flex flex-col items-center gap-6 z-10">
+        <div className="relative w-20 h-20 flex items-center justify-center">
+          <div className="absolute inset-0 rounded-full border border-[#F5C542]/20 animate-ping" />
+          <div className="absolute inset-0 rounded-full border border-[#F5C542]/10" />
+          <div className="w-full h-full rounded-full bg-[#141414] border border-[#F5C542]/30 flex items-center justify-center shadow-lg">
+            <span className="text-[#F5C542] text-4xl font-black leading-none select-none">₿</span>
+          </div>
+        </div>
+        <div className="text-center">
+          <h1 className="text-white font-black text-lg tracking-widest uppercase">Lightning Sats</h1>
+          <p className="text-[#8E8E93] text-[10px] font-semibold uppercase tracking-widest mt-1">Mine · Earn · Withdraw</p>
+        </div>
+        <div className="flex items-center gap-1.5 mt-2">
+          <div className="w-1.5 h-1.5 bg-[#F5C542] rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
+          <div className="w-1.5 h-1.5 bg-[#F5C542] rounded-full animate-bounce" style={{ animationDelay: '0.15s' }} />
+          <div className="w-1.5 h-1.5 bg-[#F5C542] rounded-full animate-bounce" style={{ animationDelay: '0.3s' }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Router() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<LoadingFallback />}>
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/task/create" component={CreateTask} />
@@ -164,15 +190,10 @@ function App() {
   const [telegramId, setTelegramId] = useState<string | null>(null);
   const [isCheckingCountry, setIsCheckingCountry] = useState(true);
   const [isAuthenticating, setIsAuthenticating] = useState(true);
-  const [showLoading, setShowLoading] = useState(true);
   const [isChannelVerified, setIsChannelVerified] = useState<boolean>(true);
   const [isCheckingMembership, setIsCheckingMembership] = useState(true);
   
   const isDevMode = import.meta.env.DEV || import.meta.env.MODE === 'development';
-
-  useEffect(() => {
-    setShowLoading(false);
-  }, []);
 
   const checkMembership = useCallback(async () => {
     try {
@@ -357,7 +378,7 @@ function App() {
     return <BanScreen reason={banReason} />;
   }
 
-  if (isCheckingCountry || isAuthenticating || isCheckingMembership || showLoading) {
+  if (isCheckingCountry || isAuthenticating || isCheckingMembership) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-[#0a0a0a]">
         {/* Subtle glow */}
