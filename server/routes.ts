@@ -19,7 +19,8 @@ import {
   spinData,
   spinHistory,
   dailyMissions,
-  miningBoosts
+  miningBoosts,
+  satTransfers
 } from "../shared/schema";
 import { db } from "./db";
 import { eq, sql, desc, and, gte } from "drizzle-orm";
@@ -868,19 +869,129 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = req.user?.user;
       if (!user) return res.status(401).json({ message: "Not authenticated" });
       
-      const [userTransactions, userWithdrawals, userDeposits] = await Promise.all([
+      const [userTransactions, userWithdrawals, userDeposits, sentTransfers, receivedTransfers] = await Promise.all([
         db.select().from(transactions).where(eq(transactions.userId, user.id)).orderBy(desc(transactions.createdAt)),
         storage.getUserWithdrawals(user.id),
-        storage.getUserDeposits(user.id)
+        storage.getUserDeposits(user.id),
+        db.select({
+          id: satTransfers.id,
+          senderId: satTransfers.senderId,
+          receiverId: satTransfers.receiverId,
+          amount: satTransfers.amount,
+          note: satTransfers.note,
+          createdAt: satTransfers.createdAt,
+          senderUsername: users.username,
+        }).from(satTransfers)
+          .leftJoin(users, eq(satTransfers.receiverId, users.id))
+          .where(eq(satTransfers.senderId, user.id))
+          .orderBy(desc(satTransfers.createdAt)),
+        db.select({
+          id: satTransfers.id,
+          senderId: satTransfers.senderId,
+          receiverId: satTransfers.receiverId,
+          amount: satTransfers.amount,
+          note: satTransfers.note,
+          createdAt: satTransfers.createdAt,
+          senderUsername: users.username,
+        }).from(satTransfers)
+          .leftJoin(users, eq(satTransfers.senderId, users.id))
+          .where(eq(satTransfers.receiverId, user.id))
+          .orderBy(desc(satTransfers.createdAt)),
       ]);
 
       res.json({
         transactions: userTransactions,
         withdrawals: userWithdrawals,
-        deposits: userDeposits
+        deposits: userDeposits,
+        sentTransfers: sentTransfers.map(t => ({ ...t, direction: 'sent' })),
+        receivedTransfers: receivedTransfers.map(t => ({ ...t, direction: 'received' })),
       });
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // SAT Transfer: Send SAT to another user
+  app.post("/api/transfers/send", authenticateTelegram, async (req: any, res) => {
+    try {
+      const sender = req.user?.user;
+      if (!sender) return res.status(401).json({ message: "Not authenticated" });
+
+      const { recipientId, amount, note } = req.body;
+      const satAmount = Math.floor(Number(amount));
+
+      if (!recipientId || !satAmount || satAmount <= 0) {
+        return res.status(400).json({ message: "Invalid recipient or amount" });
+      }
+      if (satAmount < 1) {
+        return res.status(400).json({ message: "Minimum transfer is 1 SAT" });
+      }
+
+      const senderBalance = Math.floor(parseFloat(sender.balance || "0"));
+      if (senderBalance < satAmount) {
+        return res.status(400).json({ message: "Insufficient SAT balance" });
+      }
+
+      // Find receiver by ID, username, or telegram_id
+      const [receiver] = await db.select().from(users).where(
+        sql`(id = ${recipientId} OR username = ${recipientId} OR telegram_id = ${recipientId})`
+      ).limit(1);
+
+      if (!receiver) {
+        return res.status(404).json({ message: "User not found. Check the ID and try again." });
+      }
+
+      if (receiver.id === sender.id) {
+        return res.status(400).json({ message: "Cannot send SAT to yourself" });
+      }
+
+      // Deduct from sender
+      await db.execute(sql`
+        UPDATE users SET balance = balance - ${satAmount} WHERE id = ${sender.id} AND balance >= ${satAmount}
+      `);
+
+      // Add to receiver
+      await db.execute(sql`
+        UPDATE users SET balance = balance + ${satAmount} WHERE id = ${receiver.id}
+      `);
+
+      // Record transfer
+      await db.insert(satTransfers).values({
+        senderId: sender.id,
+        receiverId: receiver.id,
+        amount: satAmount.toString(),
+        note: note || null,
+      });
+
+      res.json({
+        success: true,
+        message: `Successfully sent ${satAmount.toLocaleString()} SAT to ${receiver.username || receiver.id}`,
+        newBalance: senderBalance - satAmount,
+      });
+    } catch (error) {
+      console.error("Transfer error:", error);
+      res.status(500).json({ message: "Transfer failed. Please try again." });
+    }
+  });
+
+  // Look up user for transfer (by username or ID)
+  app.get("/api/users/lookup", authenticateTelegram, async (req: any, res) => {
+    try {
+      const query = String(req.query.q || "").trim();
+      if (!query) return res.status(400).json({ message: "Query required" });
+
+      const [found] = await db.select({
+        id: users.id,
+        username: users.username,
+        firstName: users.firstName,
+      }).from(users).where(
+        sql`(id = ${query} OR username = ${query} OR telegram_id = ${query})`
+      ).limit(1);
+
+      if (!found) return res.status(404).json({ message: "User not found" });
+      res.json({ user: found });
+    } catch (error) {
+      res.status(500).json({ message: "Lookup failed" });
     }
   });
 

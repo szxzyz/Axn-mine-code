@@ -701,6 +701,19 @@ export async function ensureDatabaseSchema(): Promise<void> {
     // Create index for blocked countries
     await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_blocked_countries_code ON blocked_countries(country_code)`);
 
+    // SAT Transfers table
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS sat_transfers (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        sender_id VARCHAR NOT NULL REFERENCES users(id),
+        receiver_id VARCHAR NOT NULL REFERENCES users(id),
+        amount DECIMAL(20, 0) NOT NULL,
+        note TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    console.log('✅ [MIGRATION] sat_transfers table ensured');
+
     // Create indexes for performance
     await db.execute(sql`CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON sessions(expire)`);
     await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_users_telegram_id ON users(telegram_id)`);
