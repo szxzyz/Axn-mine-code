@@ -1125,7 +1125,7 @@ export default function Home() {
 
   return (
     <Layout>
-      <main className="max-w-md mx-auto px-4 pt-4 pb-6">
+      <main className="max-w-md mx-auto px-4 pt-4 pb-0">
         {/* Unified Profile & Balance Section */}
         <div className="mb-4 relative">
           <div className="flex justify-between items-center mb-4">
@@ -1230,25 +1230,6 @@ export default function Home() {
                   </div>
                 )}
 
-                <div className="mb-4">
-                  <Button 
-                    onClick={handleClaimClick}
-                    disabled={claimMiningMutation.isPending}
-                    className={`w-full ${
-                      miningAmount >= 1 
-                        ? "bg-blue-600 hover:bg-blue-700 text-white" 
-                        : "bg-[#1a1a1a] hover:bg-[#222] text-white border border-white/5"
-                    } rounded-xl py-2.5 text-xs font-bold h-11 uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-white/5`}
-                  >
-                    {claimMiningMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : (
-                      <>
-                        <HandCoins className="w-3.5 h-3.5" />
-                        {t('claim')}
-                      </>
-                    )}
-                  </Button>
-                </div>
-
                 <div className="grid grid-cols-2 gap-3 pt-4 border-t border-white/5">
                   <Button
                     onClick={() => setWithdrawPopupOpen(true)}
@@ -1258,11 +1239,18 @@ export default function Home() {
                     Withdraw
                   </Button>
                   <Button
-                    onClick={() => setPromoPopupOpen(true)}
-                    className="w-full h-11 bg-white hover:bg-zinc-200 text-black rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-white/5"
+                    onClick={handleClaimClick}
+                    disabled={claimMiningMutation.isPending || !canClaimMining}
+                    className="w-full h-11 bg-white hover:bg-zinc-200 text-black rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-white/5 disabled:opacity-50"
                   >
-                    <Ticket className="w-4 h-4" />
-                    {t('promo')}
+                    {claimMiningMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <HandCoins className="w-4 h-4" />
+                        Claim
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
@@ -1299,7 +1287,6 @@ export default function Home() {
         </div>
 
       </main>
-
 
       {boosterPopupOpen && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 px-4">
@@ -1436,71 +1423,6 @@ export default function Home() {
         </div>
       )}
 
-      {promoPopupOpen && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[60] px-4 backdrop-blur-sm">
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            className="bg-[#0d0d0d] rounded-[24px] p-6 w-full max-w-[320px] border border-white/5 relative shadow-2xl overflow-hidden"
-          >
-            <div className="relative z-10 pt-2">
-              <h2 className="text-xl font-black text-white text-center mb-1 uppercase tracking-tight">Promo code</h2>
-              <p className="text-[11px] text-zinc-400 text-center mb-4 font-bold leading-relaxed px-1">
-                Enter your promo code below to claim special rewards!
-              </p>
-
-              <div className="space-y-2">
-                <Input
-                  type="text"
-                  placeholder="Enter code"
-                  value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value)}
-                  className="bg-white/5 border-white/10 h-12 rounded-[16px] text-white text-center font-black uppercase tracking-widest placeholder:text-zinc-600 text-sm"
-                />
-                
-                <Button
-                  onClick={() => promoCode.trim() && redeemPromoMutation.mutate(promoCode.trim())}
-                  disabled={isApplyingPromo || !promoCode.trim()}
-                  className="w-full h-12 bg-white hover:bg-zinc-200 text-black rounded-[16px] font-black text-sm transition-all active:scale-95 shadow-lg shadow-white/5"
-                >
-                  {isApplyingPromo ? (
-                    <div className="flex items-center gap-2">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Applying...
-                    </div>
-                  ) : (
-                    "REDEEM"
-                  )}
-                </Button>
-
-                <div className="pt-3 border-t border-white/5 mt-2">
-                  <p className="text-[9px] text-zinc-500 text-center mb-2 font-black uppercase tracking-wider opacity-60">
-                    Join our telegram channel for more gift codes!
-                  </p>
-                  
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => window.open("https://t.me/MoneyAdz", "_blank")}
-                      className="flex-1 h-10 bg-white/5 border-white/10 hover:bg-white/10 text-white rounded-lg font-black text-[10px] uppercase tracking-wider gap-1"
-                    >
-                      <Send className="w-3.5 h-3.5" />
-                      Join
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => setPromoPopupOpen(false)}
-                      className="h-10 px-4 bg-white/5 border-white/10 hover:bg-white/10 text-white rounded-lg font-black text-[10px] uppercase tracking-wider"
-                    >
-                      Close
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
 
 
       {settingsOpen && (
