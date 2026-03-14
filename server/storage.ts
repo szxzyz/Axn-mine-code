@@ -151,7 +151,12 @@ export interface IStorage {
     approvedWithdrawals: number;
     rejectedWithdrawals: number;
     pendingDeposits: number;
+    totalMiningSats: string;
+    miningToday: string;
+    usersWithReferrals: number;
+    totalSatsWithdrawn: string;
   }>;
+  checkAndActivateReferralOnChannelJoin(userId: string): Promise<void>;
 
   // Mining operations
   getMiningState(userId: string): Promise<{
@@ -1151,6 +1156,50 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async checkAndActivateReferralOnChannelJoin(userId: string): Promise<void> {
+    try {
+      const [user] = await db.select().from(users).where(eq(users.id, userId));
+      if (!user) return;
+
+      const pendingReferrals = await db
+        .select()
+        .from(referrals)
+        .where(and(
+          eq(referrals.refereeId, userId),
+          eq(referrals.status, 'pending')
+        ));
+
+      if (pendingReferrals.length === 0) return;
+
+      const referralBoostPerInvite = parseFloat(await this.getAppSetting('referral_boost_per_invite', '0.02'));
+
+      for (const referral of pendingReferrals) {
+        await db
+          .update(referrals)
+          .set({ status: 'completed' })
+          .where(eq(referrals.id, referral.id));
+
+        const [referrer] = await db.select().from(users).where(eq(users.id, referral.referrerId));
+        if (referrer) {
+          const previousBoost = parseFloat(referrer.referralMiningBoost || '0');
+          const newBoost = (previousBoost + referralBoostPerInvite).toFixed(4);
+
+          await db.update(users)
+            .set({
+              referralMiningBoost: newBoost,
+              friendsInvited: sql`COALESCE(${users.friendsInvited}, 0) + 1`,
+              updatedAt: new Date()
+            })
+            .where(eq(users.id, referral.referrerId));
+
+          console.log(`✅ Referral activated on channel join: ${userId} -> ${referral.referrerId}, boost +${referralBoostPerInvite}/h`);
+        }
+      }
+    } catch (error) {
+      console.error('Error activating referral on channel join:', error);
+    }
+  }
+
   async getUserReferrals(userId: string): Promise<Referral[]> {
     return db
       .select()
@@ -1734,6 +1783,29 @@ export class DatabaseStorage implements IStorage {
         count: sql<number>`count(*)`
       }).from(deposits).where(eq(deposits.status, 'pending'));
 
+      // Total SAT mined (sum of all user balances + totalEarnings)
+      const [totalMiningSatsRes] = await db.select({
+        total: sql<string>`COALESCE(SUM(CAST(total_earnings AS NUMERIC)), '0')`
+      }).from(users);
+
+      // SAT mined today (sum of ad_watch earnings today)
+      const [miningTodayRes] = await db.select({
+        total: sql<string>`COALESCE(SUM(CAST(amount AS NUMERIC)), '0')`
+      }).from(earnings).where(and(
+        gte(earnings.createdAt, today),
+        eq(earnings.source, 'ad_watch')
+      ));
+
+      // Users with at least 1 referral (completed)
+      const [usersWithReferralsRes] = await db.select({
+        count: sql<number>`COUNT(DISTINCT referrer_id)`
+      }).from(referrals).where(eq(referrals.status, 'completed'));
+
+      // Total SAT withdrawn (approved withdrawals)
+      const [totalSatsWithdrawnRes] = await db.select({
+        total: sql<string>`COALESCE(SUM(CAST(amount AS NUMERIC)), '0')`
+      }).from(withdrawals).where(sql`status IN ('completed', 'success', 'paid', 'Approved', 'approved')`);
+
       return {
         totalUsers: Number(totalUsersResult.count || 0),
         activeUsersToday: Number(activeUsersResult.count || 0),
@@ -1748,7 +1820,11 @@ export class DatabaseStorage implements IStorage {
         pendingWithdrawals: Number(withdrawStatusRes.pending || 0),
         approvedWithdrawals: Number(withdrawStatusRes.approved || 0),
         rejectedWithdrawals: Number(withdrawStatusRes.rejected || 0),
-        pendingDeposits: Number(pendingDepositsRes.count || 0)
+        pendingDeposits: Number(pendingDepositsRes.count || 0),
+        totalMiningSats: totalMiningSatsRes.total || '0',
+        miningToday: miningTodayRes.total || '0',
+        usersWithReferrals: Number(usersWithReferralsRes.count || 0),
+        totalSatsWithdrawn: totalSatsWithdrawnRes.total || '0',
       };
     } catch (error) {
       console.error('❌ Error in getAppStats:', error);
@@ -1766,7 +1842,11 @@ export class DatabaseStorage implements IStorage {
         pendingWithdrawals: 0,
         approvedWithdrawals: 0,
         rejectedWithdrawals: 0,
-        pendingDeposits: 0
+        pendingDeposits: 0,
+        totalMiningSats: '0',
+        miningToday: '0',
+        usersWithReferrals: 0,
+        totalSatsWithdrawn: '0',
       };
     }
   }

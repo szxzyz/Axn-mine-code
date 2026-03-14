@@ -1063,6 +1063,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update user status in database to match current membership state
       if (user) {
         await storage.updateUserVerificationStatus(user.id, isVerified);
+        // AUTO-ACTIVATE: If user just joined channel, activate any pending referrals immediately
+        if (channelMember) {
+          await storage.checkAndActivateReferralOnChannelJoin(user.id);
+        }
       }
       
       res.json({
@@ -3443,14 +3447,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalUsers: stats.totalUsers,
         totalEarnings: stats.totalEarnings,
         totalWithdrawals: stats.totalPayouts,
-        tonWithdrawn: stats.totalPayouts, // Adjusted mapping
+        tonWithdrawn: stats.totalPayouts,
         pendingWithdrawals: stats.pendingWithdrawals,
         successfulWithdrawals: stats.approvedWithdrawals,
         rejectedWithdrawals: stats.rejectedWithdrawals,
         dailyActiveUsers: stats.activeUsersToday,
         totalAdsWatched: stats.totalAdsWatched,
         todayAdsWatched: stats.adsWatchedToday,
-        activePromos: 0 // Placeholder or fetch if needed
+        totalMiningSats: stats.totalMiningSats,
+        miningToday: stats.miningToday,
+        usersWithReferrals: stats.usersWithReferrals,
+        totalSatsWithdrawn: stats.totalSatsWithdrawn,
+        activePromos: 0
       });
     } catch (error) {
       console.error('Error fetching admin stats:', error);
@@ -3566,6 +3574,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         referralRewardTON: parseFloat(getSetting('referral_reward_usd', '0.0005')),
         referralRewardAXN: parseInt(getSetting('referral_reward_axn', '50')),
         referralAdsRequired: parseInt(getSetting('referral_ads_required', '1')),
+        referralBoostPerInvite: parseFloat(getSetting('referral_boost_per_invite', '0.02')),
         streakReward: parseInt(getSetting('streak_reward', '100')),
         shareTaskReward: parseInt(getSetting('share_task_reward', '1000')),
         communityTaskReward: parseInt(getSetting('community_task_reward', '1000')),
@@ -3633,6 +3642,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         referralRewardTON: 'referral_reward_usd',
         referralRewardAXN: 'referral_reward_axn',
         referralAdsRequired: 'referral_ads_required',
+        referralBoostPerInvite: 'referral_boost_per_invite',
         streakReward: 'streak_reward',
         shareTaskReward: 'share_task_reward',
         communityTaskReward: 'community_task_reward',
@@ -3715,6 +3725,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         referralRewardTON: 'referral_reward_usd',
         referralRewardAXN: 'referral_reward_axn',
         referralAdsRequired: 'referral_ads_required',
+        referralBoostPerInvite: 'referral_boost_per_invite',
         streakReward: 'streak_reward',
         shareTaskReward: 'share_task_reward',
         communityTaskReward: 'community_task_reward',
