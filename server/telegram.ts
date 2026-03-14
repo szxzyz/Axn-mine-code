@@ -682,7 +682,7 @@ export async function sendSharePhotoToChat(
 
 export async function formatWelcomeMessage(): Promise<{ message: string; inlineKeyboard: any }> {
   const botUsername = await getBotUsername();
-  const channelUrl = 'https://t.me/Lightiningsat';
+  const channelUrl = 'https://t.me/LightningSatoshi';
   const groupUrl = 'https://t.me/LightningSatCommunity';
   
   const message = `🚀 It's Time to Start Mining Sats\n\n` +

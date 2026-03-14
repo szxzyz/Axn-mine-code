@@ -10,8 +10,8 @@ export const config = {
   telegram: {
     // Channel settings (environment variables required)
     channelId: process.env.TELEGRAM_CHANNEL_ID || '-1002242502661',
-    channelUrl: process.env.TELEGRAM_CHANNEL_URL || 'https://t.me/MoneyAdz',
-    channelName: process.env.TELEGRAM_CHANNEL_NAME || 'Money adz',
+    channelUrl: process.env.TELEGRAM_CHANNEL_URL || 'https://t.me/LightningSatoshi',
+    channelName: process.env.TELEGRAM_CHANNEL_NAME || 'LightningSatoshi',
     // Group settings (environment variables required)
     groupId: process.env.TELEGRAM_GROUP_ID || '-1002769424144',
     groupUrl: process.env.TELEGRAM_GROUP_URL || 'https://t.me/LightningSatCommunity',

@@ -9674,5 +9674,41 @@ ${walletAddress}
     }
   });
 
+  // Contest submission endpoint
+  app.post('/api/contest/submit', authenticateTelegram, async (req: any, res) => {
+    try {
+      const { link, viewsRange } = req.body;
+      if (!link || !viewsRange) {
+        return res.status(400).json({ message: "Link and views range are required" });
+      }
+
+      const telegramUser = req.user?.telegramUser;
+      const user = req.user?.user;
+
+      const displayName = user?.firstName || telegramUser?.first_name || "Unknown";
+      const tgUsername = telegramUser?.username ? `@${telegramUser.username}` : "—";
+      const userId = user?.id || telegramUser?.id || "—";
+      const telegramId = user?.telegramId || telegramUser?.id?.toString() || "—";
+      const now = new Date().toLocaleString("en-US", { timeZone: "UTC", dateStyle: "medium", timeStyle: "short" });
+
+      const message =
+        `🏆 <b>New Contest Submission</b>\n\n` +
+        `👤 <b>User Name:</b> ${displayName}\n` +
+        `🆔 <b>User ID:</b> ${userId}\n` +
+        `📱 <b>Telegram Username:</b> ${tgUsername}\n` +
+        `📌 <b>Telegram ID:</b> ${telegramId}\n\n` +
+        `🔗 <b>Video Link:</b> ${link}\n\n` +
+        `👁 <b>Views Range:</b> ${viewsRange}\n\n` +
+        `📅 <b>Date & Time (UTC):</b> ${now}`;
+
+      await sendTelegramMessage(message);
+
+      return res.json({ success: true, message: "Submission received. Admin will review and reward you soon." });
+    } catch (error) {
+      console.error("Contest submission error:", error);
+      return res.status(500).json({ message: "Failed to submit. Please try again." });
+    }
+  });
+
   return httpServer;
 }
