@@ -1071,7 +1071,7 @@ export default function Home() {
   const handleCheckForUpdates = useCallback(() => {
     if (missionStatus?.checkForUpdates?.claimed || checkForUpdatesStep !== 'idle') return;
     const tgWebApp = (window as any).Telegram?.WebApp;
-    const channelUrl = 'https://t.me/Lightiningsat';
+    const channelUrl = 'https://t.me/LightningSatoshi';
     if (tgWebApp?.openTelegramLink) {
       tgWebApp.openTelegramLink(channelUrl);
     } else if (tgWebApp?.openLink) {
