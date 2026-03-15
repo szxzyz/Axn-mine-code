@@ -61,6 +61,13 @@ export default function InvitePopup({ onClose }: InvitePopupProps) {
     queryKey: ['/api/bot-info'],
     staleTime: 60 * 60 * 1000,
   });
+
+  const { data: appSettings } = useQuery<any>({
+    queryKey: ["/api/app-settings"],
+    staleTime: 5 * 60 * 1000,
+  });
+  const referralBoostPerInvite: number = appSettings?.referralBoostPerInvite ?? 0.02;
+
   const botUsername = botInfo?.username || "bot";
   const referralLink = user?.referralCode
     ? `https://t.me/${botUsername}?start=${user.referralCode}`
@@ -68,7 +75,7 @@ export default function InvitePopup({ onClose }: InvitePopupProps) {
 
   const referrals = referralData?.referrals || [];
   const activeReferrals = referrals.filter((r) => r.isActive);
-  const totalBoost = activeReferrals.length * 0.02;
+  const totalBoost = activeReferrals.length * referralBoostPerInvite;
 
   const copyLink = () => {
     if (!referralLink) return;
@@ -154,7 +161,7 @@ export default function InvitePopup({ onClose }: InvitePopupProps) {
               <div className="flex items-start gap-3 bg-white/5 rounded-xl p-3">
                 <Zap className="w-4 h-4 text-[#F5C542] flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-white text-xs font-bold">You earn +0.02 SAT/h per friend</p>
+                  <p className="text-white text-xs font-bold">You earn +{referralBoostPerInvite.toFixed(3).replace(/\.?0+$/, "")} SAT/h per friend</p>
                   <p className="text-white/50 text-xs mt-0.5">More friends = faster mining, up to 100/h Sats.</p>
                 </div>
               </div>
@@ -278,7 +285,7 @@ export default function InvitePopup({ onClose }: InvitePopupProps) {
                             </p>
                             {r.isActive && (
                               <p className="text-green-400 text-xs font-semibold">
-                                +0.02/h
+                                +{referralBoostPerInvite.toFixed(3).replace(/\.?0+$/, "")}/h
                               </p>
                             )}
                           </div>
