@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Receipt, Shield, Trophy, Users, Wifi, TrendingDown, CalendarDays, Crown,
+  Receipt, Shield, Trophy, Users, Wifi, CalendarDays,
   ChevronRight, ArrowLeft, CheckCircle, XCircle, Clock, Loader2,
   Youtube, Instagram, Video, Link2, CheckSquare, Square, Plus, ScrollText, AlertCircle,
+  BarChart3, Scale, Sparkles, Zap, TrendingUp, Activity, RefreshCw, Star,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
@@ -25,6 +26,17 @@ const VIEW_RANGES = [
   { label: "500K – 999.9K Views", value: "500k-999.9k", reward: "25K sats" },
   { label: "1M+ Views", value: "1m+", reward: "100K sats" },
 ];
+
+function fmtNum(n: number): string {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+  if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
+  return n.toLocaleString();
+}
+
+function fmtAge(days: number): string {
+  if (days >= 30) return `${Math.floor(days / 30)}mo ${days % 30}d`;
+  return `${days}d`;
+}
 
 export default function MenuPopup({ onClose }: MenuPopupProps) {
   const { user } = useAuth();
@@ -51,10 +63,16 @@ export default function MenuPopup({ onClose }: MenuPopupProps) {
   const { data: projectStats } = useQuery<{
     totalUsers: number;
     onlineNow: number;
-    totalWithdrawals: number;
+    totalWithdrawalsAmount: number;
+    totalWithdrawalsCount: number;
     projectAgeDays: number;
-    membership: string;
-    userJoinedDate: string | null;
+    totalEarnings: number;
+    todayEarnings: number;
+    dau: number;
+    wau: number;
+    totalReferrals: number;
+    uptimePct: number;
+    retentionRate: number;
   }>({
     queryKey: ["/api/project/stats"],
     enabled: overlay === "stats",
@@ -157,34 +175,23 @@ export default function MenuPopup({ onClose }: MenuPopupProps) {
             </div>
 
             <div className="px-4 py-4 space-y-1.5">
-              {/* Project Statistics */}
               <MenuItem
-                icon={<Users className="w-4 h-4 text-blue-400" />}
-                iconBg="bg-blue-500/10"
+                icon={<BarChart3 className="w-5 h-5 text-blue-400" />}
                 label="Project Statistics"
                 onClick={() => setOverlay("stats")}
               />
-
-              {/* Contest */}
               <MenuItem
-                icon={<Trophy className="w-4 h-4 text-[#F5C542]" />}
-                iconBg="bg-yellow-500/10"
+                icon={<Sparkles className="w-5 h-5 text-[#F5C542]" />}
                 label="Contest"
                 onClick={() => setOverlay("contest")}
               />
-
-              {/* Transactions */}
               <MenuItem
-                icon={<Receipt className="w-4 h-4 text-green-400" />}
-                iconBg="bg-green-500/10"
+                icon={<Receipt className="w-5 h-5 text-green-400" />}
                 label="Transactions"
                 onClick={() => setOverlay("transactions")}
               />
-
-              {/* Legal Info */}
               <MenuItem
-                icon={<Shield className="w-4 h-4 text-purple-400" />}
-                iconBg="bg-purple-500/10"
+                icon={<Scale className="w-5 h-5 text-purple-400" />}
                 label="Legal Info"
                 onClick={() => setOverlay("legal")}
               />
@@ -204,18 +211,38 @@ export default function MenuPopup({ onClose }: MenuPopupProps) {
               {!projectStats ? (
                 <div className="flex justify-center py-12"><Loader2 className="w-5 h-5 text-white/30 animate-spin" /></div>
               ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  <StatCard icon={<Users className="w-5 h-5 text-blue-400" />} bg="bg-blue-500/10" label="Users" value={projectStats.totalUsers.toLocaleString()} />
-                  <StatCard icon={<Wifi className="w-5 h-5 text-green-400" />} bg="bg-green-500/10" label="Online Now" value={projectStats.onlineNow.toLocaleString()} />
-                  <StatCard icon={<TrendingDown className="w-5 h-5 text-yellow-400" />} bg="bg-yellow-500/10" label="Withdrawals" value={`${Math.floor(projectStats.totalWithdrawals).toLocaleString()} SAT`} />
-                  <StatCard icon={<CalendarDays className="w-5 h-5 text-purple-400" />} bg="bg-purple-500/10" label="App Age" value={`${projectStats.projectAgeDays} days`} />
-                  <StatCard icon={<Crown className="w-5 h-5 text-[#F5C542]" />} bg="bg-yellow-500/10" label="Membership" value={projectStats.membership || "Free"} wide />
-                  {projectStats.userJoinedDate && (
-                    <StatCard icon={<CalendarDays className="w-5 h-5 text-cyan-400" />} bg="bg-cyan-500/10" label="You Joined"
-                      value={new Date(projectStats.userJoinedDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                      wide
-                    />
-                  )}
+                <div className="space-y-4">
+                  {/* Core Stats */}
+                  <div>
+                    <p className="text-white/30 text-[10px] font-black uppercase tracking-widest mb-2.5 px-1">Core</p>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <StatCard icon={<Users className="w-4 h-4 text-blue-400" />} label="Total Users" value={fmtNum(projectStats.totalUsers)} accent="blue" />
+                      <StatCard icon={<Wifi className="w-4 h-4 text-green-400" />} label="Online Now" value={fmtNum(projectStats.onlineNow)} accent="green" live />
+                      <StatCard icon={<CalendarDays className="w-4 h-4 text-purple-400" />} label="Project Age" value={fmtAge(projectStats.projectAgeDays)} accent="purple" />
+                      <StatCard icon={<TrendingUp className="w-4 h-4 text-[#F5C542]" />} label="Earnings Distributed" value={`${fmtNum(projectStats.totalEarnings)} SAT`} accent="yellow" />
+                      <StatCard icon={<Receipt className="w-4 h-4 text-cyan-400" />} label="Total Withdrawals" value={fmtNum(projectStats.totalWithdrawalsCount)} accent="cyan" wide />
+                    </div>
+                  </div>
+
+                  {/* Advanced Stats */}
+                  <div>
+                    <p className="text-white/30 text-[10px] font-black uppercase tracking-widest mb-2.5 px-1">Advanced</p>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <StatCard icon={<Zap className="w-4 h-4 text-orange-400" />} label="Today Earnings" value={`${fmtNum(projectStats.todayEarnings)} SAT`} accent="orange" wide />
+                      <StatCard icon={<Activity className="w-4 h-4 text-blue-300" />} label="Daily Active" value={fmtNum(projectStats.dau)} accent="blue" />
+                      <StatCard icon={<Activity className="w-4 h-4 text-indigo-400" />} label="Weekly Active" value={fmtNum(projectStats.wau)} accent="indigo" />
+                    </div>
+                  </div>
+
+                  {/* Pro Stats */}
+                  <div>
+                    <p className="text-white/30 text-[10px] font-black uppercase tracking-widest mb-2.5 px-1">Pro</p>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <StatCard icon={<Users className="w-4 h-4 text-teal-400" />} label="Total Referrals" value={fmtNum(projectStats.totalReferrals)} accent="teal" />
+                      <StatCard icon={<RefreshCw className="w-4 h-4 text-green-400" />} label="System Uptime" value={`${projectStats.uptimePct}%`} accent="green" />
+                      <StatCard icon={<Star className="w-4 h-4 text-[#F5C542]" />} label="Retention Rate" value={`${projectStats.retentionRate}%`} accent="yellow" wide />
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -286,15 +313,15 @@ export default function MenuPopup({ onClose }: MenuPopupProps) {
         {overlay === "contest" && (
           <motion.div className="fixed inset-0 bg-[#0a0a0a] z-[300] flex flex-col" {...slideIn}>
             <OverlayHeader title="Contest" />
-            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+            <div className="flex-1 overflow-y-auto px-4 py-3">
               {!showSubmitForm ? (
                 <>
                   {/* Hero */}
-                  <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[#F5C542]/20 via-[#F5C542]/5 to-transparent border border-[#F5C542]/20 p-4">
+                  <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[#F5C542]/20 via-[#F5C542]/5 to-transparent border border-[#F5C542]/20 p-4 mb-3">
                     <div className="absolute top-0 right-0 w-24 h-24 bg-[#F5C542]/10 rounded-full blur-2xl" />
                     <div className="relative z-10">
-                      <div className="w-10 h-10 rounded-xl bg-[#F5C542]/20 border border-[#F5C542]/30 flex items-center justify-center mb-3">
-                        <Trophy className="w-5 h-5 text-[#F5C542]" />
+                      <div className="w-9 h-9 rounded-xl bg-[#F5C542]/20 border border-[#F5C542]/30 flex items-center justify-center mb-2.5">
+                        <Sparkles className="w-4.5 h-4.5 text-[#F5C542]" />
                       </div>
                       <p className="text-white font-black text-sm leading-snug">
                         Tell others about Lightning Sats, and get up to{" "}
@@ -304,14 +331,12 @@ export default function MenuPopup({ onClose }: MenuPopupProps) {
                   </div>
 
                   {/* Rules */}
-                  <p className="text-white/40 text-[10px] font-black uppercase tracking-widest">Rules</p>
-                  <div className="space-y-2">
-                    <div className="bg-[#141414] border border-white/5 rounded-2xl p-3.5">
-                      <div className="flex items-start gap-2">
-                        <span className="w-5 h-5 rounded-full bg-[#F5C542]/20 flex items-center justify-center text-[#F5C542] font-black text-[10px] flex-shrink-0">1</span>
-                        <div>
-                          <p className="text-white font-bold text-xs">Create Content</p>
-                          <p className="text-white/50 text-[11px] leading-relaxed mt-1">Make a fun video about Lightning Sats and post it on:</p>
+                  <p className="text-white/40 text-[10px] font-black uppercase tracking-widest mb-2 px-0.5">Rules</p>
+                  <div className="space-y-2 mb-3">
+                    {[
+                      {
+                        n: "1", title: "Create Content", desc: "Make a fun video about Lightning Sats and post it on:",
+                        extra: (
                           <div className="flex gap-1.5 flex-wrap mt-1.5">
                             <div className="flex items-center gap-1 bg-red-500/10 border border-red-500/20 rounded-lg px-2 py-1">
                               <Youtube className="w-3 h-3 text-red-400" /><span className="text-red-400 text-[10px] font-bold">YouTube Shorts</span>
@@ -323,49 +348,33 @@ export default function MenuPopup({ onClose }: MenuPopupProps) {
                               <Video className="w-3 h-3 text-cyan-400" /><span className="text-cyan-400 text-[10px] font-bold">TikTok</span>
                             </div>
                           </div>
+                        )
+                      },
+                      { n: "2", title: "Include Your Invite Link", desc: "Attach your ID or Invite Link in the video description." },
+                      { n: "3", title: "Send the Link", desc: "Once your video reaches 100+ views, send us the link." },
+                      { n: "4", title: "Earn Rewards", desc: "The more views, the bigger the reward. Up to", highlight: "10,000,000 Sats" },
+                    ].map((rule) => (
+                      <div key={rule.n} className="bg-[#141414] border border-white/5 rounded-2xl p-3">
+                        <div className="flex items-start gap-2">
+                          <span className="w-5 h-5 rounded-full bg-[#F5C542]/20 flex items-center justify-center text-[#F5C542] font-black text-[10px] flex-shrink-0">{rule.n}</span>
+                          <div>
+                            <p className="text-white font-bold text-xs">{rule.title}</p>
+                            <p className="text-white/50 text-[11px] leading-relaxed mt-0.5">
+                              {rule.desc}{rule.highlight && <> <span className="text-[#F5C542] font-bold">{rule.highlight}</span> per video.</>}
+                            </p>
+                            {rule.extra}
+                          </div>
                         </div>
                       </div>
-                    </div>
-
-                    <div className="bg-[#141414] border border-white/5 rounded-2xl p-3.5">
-                      <div className="flex items-start gap-2">
-                        <span className="w-5 h-5 rounded-full bg-[#F5C542]/20 flex items-center justify-center text-[#F5C542] font-black text-[10px] flex-shrink-0">2</span>
-                        <div>
-                          <p className="text-white font-bold text-xs">Include Your Invite Link</p>
-                          <p className="text-white/50 text-[11px] leading-relaxed mt-1">Attach your ID or Invite Link in the video description.</p>
-                          <p className="text-[#F5C542]/70 text-[10px] mt-1 flex items-center gap-1"><Link2 className="w-2.5 h-2.5" />Get Your Invite Link in the Friends Section</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-[#141414] border border-white/5 rounded-2xl p-3.5">
-                      <div className="flex items-start gap-2">
-                        <span className="w-5 h-5 rounded-full bg-[#F5C542]/20 flex items-center justify-center text-[#F5C542] font-black text-[10px] flex-shrink-0">3</span>
-                        <div>
-                          <p className="text-white font-bold text-xs">Send the Link</p>
-                          <p className="text-white/50 text-[11px] leading-relaxed mt-1">Once your video reaches 100+ views, send us the link.</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-[#141414] border border-white/5 rounded-2xl p-3.5">
-                      <div className="flex items-start gap-2">
-                        <span className="w-5 h-5 rounded-full bg-[#F5C542]/20 flex items-center justify-center text-[#F5C542] font-black text-[10px] flex-shrink-0">4</span>
-                        <div>
-                          <p className="text-white font-bold text-xs">Earn Rewards</p>
-                          <p className="text-white/50 text-[11px] leading-relaxed mt-1">The more views, the bigger the reward. Up to <span className="text-[#F5C542] font-bold">10,000,000 Sats</span> per video.</p>
-                        </div>
-                      </div>
-                    </div>
+                    ))}
                   </div>
 
                   <button
                     onClick={() => setShowSubmitForm(true)}
-                    className="w-full flex items-center justify-center gap-2 bg-[#F5C542] hover:bg-[#F5C542]/90 text-black font-black text-sm rounded-2xl py-3.5 transition-all active:scale-[0.98]"
+                    className="w-full flex items-center justify-center gap-2 bg-[#F5C542] hover:bg-[#F5C542]/90 text-black font-black text-sm rounded-2xl py-3.5 transition-all active:scale-[0.98] mb-3"
                   >
                     <Plus className="w-4 h-4" />Add Content and Earn
                   </button>
-                  <div className="h-2" />
                 </>
               ) : submitted ? (
                 <div className="flex flex-col items-center gap-4 text-center py-12">
@@ -380,11 +389,11 @@ export default function MenuPopup({ onClose }: MenuPopupProps) {
                 </div>
               ) : (
                 <>
-                  <button onClick={resetContest} className="flex items-center gap-1.5 text-white/40 text-xs hover:text-white/60 transition-colors">
+                  <button onClick={resetContest} className="flex items-center gap-1.5 text-white/40 text-xs hover:text-white/60 transition-colors mb-3">
                     <ArrowLeft className="w-3.5 h-3.5" /> Back
                   </button>
 
-                  <div>
+                  <div className="mb-3">
                     <label className="text-white/40 text-[10px] font-semibold uppercase tracking-wide block mb-1.5">Link to your content</label>
                     <input
                       type="url" value={link} onChange={(e) => setLink(e.target.value)}
@@ -393,7 +402,7 @@ export default function MenuPopup({ onClose }: MenuPopupProps) {
                     />
                   </div>
 
-                  <div>
+                  <div className="mb-3">
                     <label className="text-white/40 text-[10px] font-semibold uppercase tracking-wide block mb-1.5">Number of Views</label>
                     <div className="space-y-1.5">
                       {VIEW_RANGES.map((r) => (
@@ -412,7 +421,7 @@ export default function MenuPopup({ onClose }: MenuPopupProps) {
                     </div>
                   </div>
 
-                  <div className="space-y-2.5">
+                  <div className="space-y-2.5 mb-3">
                     <label className="text-white/40 text-[10px] font-semibold uppercase tracking-wide block">Confirmation</label>
                     {[
                       { state: check1, set: setCheck1, label: "I confirm that the number of views is correct" },
@@ -431,17 +440,16 @@ export default function MenuPopup({ onClose }: MenuPopupProps) {
                   </div>
 
                   {contestMutation.isError && (
-                    <p className="text-red-400 text-xs text-center">{(contestMutation.error as Error).message}</p>
+                    <p className="text-red-400 text-xs text-center mb-2">{(contestMutation.error as Error).message}</p>
                   )}
 
                   <button
                     onClick={() => canSubmit && contestMutation.mutate({ link: link.trim(), viewsRange: selectedRange! })}
                     disabled={!canSubmit || contestMutation.isPending}
-                    className={`w-full py-3.5 rounded-2xl font-black text-sm transition-all ${canSubmit && !contestMutation.isPending ? "bg-[#F5C542] text-black hover:bg-[#F5C542]/90 active:scale-[0.98]" : "bg-white/10 text-white/30 cursor-not-allowed"}`}
+                    className={`w-full py-3.5 rounded-2xl font-black text-sm transition-all mb-3 ${canSubmit && !contestMutation.isPending ? "bg-[#F5C542] text-black hover:bg-[#F5C542]/90 active:scale-[0.98]" : "bg-white/10 text-white/30 cursor-not-allowed"}`}
                   >
                     {contestMutation.isPending ? "Submitting..." : "Submit"}
                   </button>
-                  <div className="h-2" />
                 </>
               )}
             </div>
@@ -453,14 +461,14 @@ export default function MenuPopup({ onClose }: MenuPopupProps) {
   );
 }
 
-function MenuItem({ icon, iconBg, label, onClick }: { icon: React.ReactNode; iconBg: string; label: string; onClick: () => void }) {
+function MenuItem({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
       className="w-full bg-[#141414] border border-white/5 rounded-2xl px-4 py-3.5 flex items-center justify-between hover:bg-white/[0.04] transition-all active:scale-[0.98]"
     >
       <div className="flex items-center gap-3">
-        <div className={`w-8 h-8 rounded-xl ${iconBg} flex items-center justify-center`}>{icon}</div>
+        {icon}
         <span className="text-white font-bold text-sm">{label}</span>
       </div>
       <ChevronRight className="w-4 h-4 text-white/20" />
@@ -468,14 +476,29 @@ function MenuItem({ icon, iconBg, label, onClick }: { icon: React.ReactNode; ico
   );
 }
 
-function StatCard({ icon, bg, label, value, wide }: { icon: React.ReactNode; bg: string; label: string; value: string; wide?: boolean }) {
+const accentMap: Record<string, string> = {
+  blue: "text-blue-400",
+  green: "text-green-400",
+  yellow: "text-[#F5C542]",
+  purple: "text-purple-400",
+  cyan: "text-cyan-400",
+  orange: "text-orange-400",
+  pink: "text-pink-400",
+  indigo: "text-indigo-400",
+  teal: "text-teal-400",
+};
+
+function StatCard({ icon, label, value, accent, wide, live }: {
+  icon: React.ReactNode; label: string; value: string; accent?: string; wide?: boolean; live?: boolean;
+}) {
   return (
-    <div className={`bg-[#141414] border border-white/5 rounded-2xl p-4 flex items-center gap-3 ${wide ? "col-span-2" : ""}`}>
-      <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center flex-shrink-0`}>{icon}</div>
-      <div className="min-w-0">
-        <p className="text-white/40 text-[9px] font-bold uppercase tracking-widest">{label}</p>
-        <p className="text-white font-black text-sm leading-tight truncate">{value}</p>
+    <div className={`bg-[#141414] border border-white/5 rounded-2xl p-3.5 ${wide ? "col-span-2" : ""}`}>
+      <div className="flex items-center gap-2 mb-1.5">
+        {icon}
+        {live && <span className="ml-auto flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" /></span>}
       </div>
+      <p className={`font-black text-base leading-tight ${accent ? accentMap[accent] || "text-white" : "text-white"}`}>{value}</p>
+      <p className="text-white/35 text-[10px] font-bold uppercase tracking-wider mt-0.5">{label}</p>
     </div>
   );
 }
@@ -490,7 +513,7 @@ function OverlayHeader({ title }: { title: string }) {
 
 function OverlayFooter({ onClose }: { onClose: () => void }) {
   return (
-    <div className="px-5 py-4 border-t border-white/5">
+    <div className="px-5 py-4 border-t border-white/5 flex-shrink-0">
       <button
         onClick={onClose}
         className="w-full h-12 bg-[#141414] border border-white/8 rounded-2xl font-black uppercase tracking-wider text-white text-sm hover:bg-white/5 transition-all active:scale-[0.98]"
