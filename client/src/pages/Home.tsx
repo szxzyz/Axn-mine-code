@@ -1128,48 +1128,9 @@ export default function Home() {
 
   return (
     <Layout>
-      <main className="max-w-md mx-auto px-4 pt-4 pb-0">
-        {/* Unified Profile & Balance Section */}
+      <main className="max-w-md mx-auto px-4 pt-4 pb-24">
+        {/* Balance & Stats Section */}
         <div className="mb-4 relative">
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center gap-3">
-              <div 
-                className={`w-11 h-11 rounded-full overflow-hidden flex items-center justify-center border border-white/5 bg-[#1a1a1a] cursor-pointer hover:opacity-80 transition-opacity`}
-                onClick={() => setLocation("/admin")}
-              >
-                {photoUrl ? (
-                  <img 
-                    src={photoUrl} 
-                    alt="Profile" 
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <UserIcon className="w-6 h-6 text-gray-400" />
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-col">
-                <span 
-                  className={`text-white font-black text-base leading-none tracking-tight cursor-pointer hover:opacity-80`}
-                  onClick={() => setLocation("/admin")}
-                >
-                  {(user as User)?.firstName || (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.first_name || "User"}
-                </span>
-                <span className="text-[#B9FF66] text-[10px] font-black uppercase tracking-widest mt-1 opacity-90">
-                  ID: {(user as User)?.id?.substring(0, 8) || "N/A"}
-                </span>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setMenuOpen(true)}
-              className="w-9 h-9 flex items-center justify-center rounded-xl bg-[#1a1a1a] border border-white/10 hover:bg-white/10 transition-all active:scale-95"
-            >
-              <Menu className="w-4 h-4 text-white" />
-            </button>
-          </div>
-
           <div className="bg-[#141414] rounded-2xl px-4 py-2 flex justify-between items-center mb-4 border border-white/5 h-12">
             <div className="flex flex-col items-center flex-1">
               <span className="text-[#8E8E93] text-[9px] font-semibold uppercase tracking-wider mb-0.5">Total SAT Mined</span>
@@ -1235,28 +1196,33 @@ export default function Home() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-3 pt-4 border-t border-white/5">
-                  <Button
-                    onClick={() => setWithdrawPopupOpen(true)}
-                    className="w-full h-11 bg-[#F5C542] hover:bg-yellow-400 text-black rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-yellow-500/20"
-                  >
-                    <Download className="w-4 h-4" />
-                    Withdraw
-                  </Button>
-                  <Button
+                <div className="pt-4 border-t border-white/5">
+                  <button
                     onClick={handleClaimClick}
                     disabled={claimMiningMutation.isPending || !canClaimMining}
-                    className="w-full h-11 bg-[#F5C542] hover:bg-yellow-400 text-black rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-yellow-500/20 disabled:opacity-50"
+                    className="w-full h-11 rounded-xl flex items-center justify-center gap-2 font-black text-xs uppercase tracking-widest transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
+                    style={canClaimMining && !claimMiningMutation.isPending ? {
+                      background: 'linear-gradient(135deg, #F5C542 0%, #d4920a 100%)',
+                      boxShadow: '0 0 16px rgba(245,197,66,0.3)',
+                      color: '#000',
+                    } : {
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      color: 'rgba(255,255,255,0.3)',
+                    }}
                   >
                     {claimMiningMutation.isPending ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
                       <>
                         <HandCoins className="w-4 h-4" />
-                        Claim
+                        <span>Claim</span>
+                        {canClaimMining && (
+                          <span className="opacity-70">· {Math.floor(miningAmount).toLocaleString()} SAT</span>
+                        )}
                       </>
                     )}
-                  </Button>
+                  </button>
                 </div>
               </div>
 
@@ -1265,29 +1231,6 @@ export default function Home() {
                 <AdWatchingSection user={user as User} section="section2" />
               </div>
 
-              {/* Invite Friends Section */}
-              <div
-                className="mt-3 bg-[#141414] rounded-2xl p-4 border border-white/5 cursor-pointer hover:bg-[#1a1a1a] transition-all active:scale-[0.99]"
-                onClick={() => setInviteOpen(true)}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl flex-shrink-0 leading-none">🤝</span>
-                    <div>
-                      <p className="text-white font-black text-sm leading-tight">
-                        Invite Friends and Earn
-                      </p>
-                      <p className="text-[#F5C542] font-bold text-xs mt-0.5">
-                        +0.02 SAT/h per friend
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1.5 bg-[#F5C542] rounded-xl px-3 py-2 flex-shrink-0">
-                    <Send className="w-3.5 h-3.5 text-black" />
-                    <span className="text-black text-xs font-black uppercase tracking-wider">Invite</span>
-                  </div>
-                </div>
-              </div>
           </div>
         </div>
 
@@ -1429,6 +1372,75 @@ export default function Home() {
       )}
 
 
+
+      {/* Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pointer-events-none">
+        <div className="w-full max-w-md pointer-events-auto px-5 pb-5">
+          {/* Ambient glow behind the bar */}
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-64 h-20 bg-[#F5C542]/8 blur-3xl rounded-full pointer-events-none" />
+
+          <div
+            className="relative flex items-center rounded-[28px] overflow-hidden"
+            style={{
+              background: 'rgba(14,14,14,0.96)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.05)',
+              backdropFilter: 'blur(24px)',
+            }}
+          >
+            {/* Invite */}
+            <button
+              onClick={() => setInviteOpen(true)}
+              className="group flex-1 flex flex-col items-center py-4 gap-1.5 active:opacity-70 transition-opacity"
+            >
+              <UserPlus
+                className="text-white/40 group-hover:text-white/70 transition-colors"
+                style={{ width: 20, height: 20, strokeWidth: 1.6 }}
+              />
+              <span className="text-[9px] font-semibold text-white/30 tracking-[0.12em] uppercase group-hover:text-white/50 transition-colors">
+                Invite
+              </span>
+            </button>
+
+            {/* Divider */}
+            <div className="w-px h-8 bg-white/5 flex-shrink-0" />
+
+            {/* Withdraw — center primary action */}
+            <button
+              onClick={() => setWithdrawPopupOpen(true)}
+              className="group flex-[1.4] flex flex-col items-center py-3 gap-1.5 active:opacity-80 transition-opacity relative"
+            >
+              <div
+                className="flex items-center justify-center rounded-2xl px-5 py-2.5 gap-2"
+                style={{
+                  background: 'linear-gradient(135deg, #F5C542 0%, #d4920a 100%)',
+                  boxShadow: '0 0 18px rgba(245,197,66,0.35), inset 0 1px 0 rgba(255,255,255,0.2)',
+                }}
+              >
+                <Download className="text-black" style={{ width: 15, height: 15, strokeWidth: 2.5 }} />
+                <span className="text-black text-[11px] font-black tracking-[0.1em] uppercase">Withdraw</span>
+              </div>
+            </button>
+
+            {/* Divider */}
+            <div className="w-px h-8 bg-white/5 flex-shrink-0" />
+
+            {/* Menu */}
+            <button
+              onClick={() => setMenuOpen(true)}
+              className="group flex-1 flex flex-col items-center py-4 gap-1.5 active:opacity-70 transition-opacity"
+            >
+              <Menu
+                className="text-white/40 group-hover:text-white/70 transition-colors"
+                style={{ width: 20, height: 20, strokeWidth: 1.6 }}
+              />
+              <span className="text-[9px] font-semibold text-white/30 tracking-[0.12em] uppercase group-hover:text-white/50 transition-colors">
+                Menu
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
 
       {settingsOpen && (
         <SettingsPopup 
