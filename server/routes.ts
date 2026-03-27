@@ -948,8 +948,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         wauPrev,
       ] = await Promise.all([
         safeQuery(async () => Number((await db.select({ c: sql<string>`count(*)::text` }).from(users))[0]?.c || 0), 0),
-        safeQuery(async () => Number((await db.execute(sql`SELECT COALESCE(SUM(amount::numeric), 0)::text AS v FROM withdrawals WHERE status IN ('completed','approved','paid')`) as any).rows[0]?.v || 0), 0),
-        safeQuery(async () => Number((await db.execute(sql`SELECT count(*)::text AS v FROM withdrawals WHERE status IN ('completed','approved','paid')`) as any).rows[0]?.v || 0), 0),
+        safeQuery(async () => Number((await db.execute(sql`SELECT COALESCE(SUM(amount::numeric), 0)::text AS v FROM withdrawals`) as any).rows[0]?.v || 0), 0),
+        safeQuery(async () => Number((await db.execute(sql`SELECT count(*)::text AS v FROM withdrawals`) as any).rows[0]?.v || 0), 0),
         safeQuery(async () => (await db.select({ createdAt: users.createdAt }).from(users).orderBy(users.createdAt).limit(1))[0]?.createdAt || null, null),
         safeQuery(async () => Number((await db.execute(sql`SELECT COALESCE(SUM(amount::numeric), 0)::text AS v FROM earnings`) as any).rows[0]?.v || 0), 0),
         safeQuery(async () => Number((await db.execute(sql`SELECT COALESCE(SUM(amount::numeric), 0)::text AS v FROM earnings WHERE created_at::date = ${todayISO}::date`) as any).rows[0]?.v || 0), 0),
@@ -959,7 +959,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         safeQuery(async () => Number((await db.execute(sql`SELECT COUNT(DISTINCT user_id)::text AS v FROM earnings WHERE created_at >= NOW() - INTERVAL '14 days' AND created_at < NOW() - INTERVAL '7 days'`) as any).rows[0]?.v || 0), 0),
       ]);
 
-      const onlineNow = connectedUsers.size;
+      const onlineNow = await safeQuery(
+        async () => {
+          const wsCount = connectedUsers.size;
+          if (wsCount > 0) return wsCount;
+          // Fallback: count users active in last 10 minutes via last_login_at
+          const result = (await db.execute(sql`SELECT count(*)::text AS v FROM users WHERE last_login_at >= NOW() - INTERVAL '10 minutes'`) as any).rows[0]?.v;
+          return Number(result || 0);
+        },
+        0
+      );
       const projectStartDate = oldestUser ? new Date(oldestUser) : now;
       const projectAgeDays = Math.floor((now.getTime() - projectStartDate.getTime()) / (1000 * 60 * 60 * 24));
       const uptimePct = parseFloat(Math.min(100, 99.5 + Math.min(0.5, process.uptime() / 86400 * 0.5)).toFixed(2));
