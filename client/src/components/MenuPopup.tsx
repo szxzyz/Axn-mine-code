@@ -6,9 +6,11 @@ import {
   ChevronRight, ArrowLeft, CheckCircle, XCircle, Clock, Loader2,
   Youtube, Instagram, Video, Link2, CheckSquare, Square, Plus, ScrollText, AlertCircle,
   BarChart3, Scale, Sparkles, Zap, TrendingUp, Activity, RefreshCw, Star,
+  Moon, Sun,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/hooks/useTheme";
 
 interface MenuPopupProps {
   onClose: () => void;
@@ -40,6 +42,7 @@ function fmtAge(days: number): string {
 
 export default function MenuPopup({ onClose }: MenuPopupProps) {
   const { user } = useAuth();
+  const { theme, setTheme } = useTheme();
   const photoUrl = typeof window !== "undefined" && (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.photo_url;
   const name = (user as any)?.firstName ? `${(user as any).firstName}${(user as any).lastName ? " " + (user as any).lastName : ""}` : (user as any)?.username || "User";
   const uid = (user as any)?.referralCode || (user as any)?.id?.slice(0, 8) || "—";
@@ -195,6 +198,7 @@ export default function MenuPopup({ onClose }: MenuPopupProps) {
                 label="Legal Info"
                 onClick={() => setOverlay("legal")}
               />
+              <ThemeMenuItem theme={theme} setTheme={setTheme} />
             </div>
 
             <div className="h-4" />
@@ -473,6 +477,65 @@ function MenuItem({ icon, label, onClick }: { icon: React.ReactNode; label: stri
       </div>
       <ChevronRight className="w-4 h-4 text-white/20" />
     </button>
+  );
+}
+
+function ThemeMenuItem({ theme, setTheme }: { theme: "dark" | "light"; setTheme: (t: "dark" | "light") => void }) {
+  const isDark = theme === "dark";
+
+  return (
+    <div className="w-full bg-[#141414] border border-white/5 rounded-2xl px-4 py-3.5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          {isDark
+            ? <Moon className="w-5 h-5 text-indigo-400" />
+            : <Sun className="w-5 h-5 text-[#F5C542]" />
+          }
+          <div>
+            <span className="text-white font-bold text-sm block leading-none">Theme</span>
+            <span className="text-white/40 text-[10px] mt-0.5 block">
+              {isDark ? "Dark mode" : "Light mode"}
+            </span>
+          </div>
+        </div>
+
+        {/* Pill toggle */}
+        <button
+          onClick={() => setTheme(isDark ? "light" : "dark")}
+          className="relative flex items-center rounded-full p-[3px] transition-all active:scale-95"
+          style={{
+            background: isDark
+              ? "linear-gradient(135deg, #312e5e 0%, #1e1b4b 100%)"
+              : "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
+            border: isDark ? "1px solid rgba(99,102,241,0.35)" : "1px solid rgba(245,197,66,0.5)",
+          }}
+        >
+          {/* Dark option */}
+          <span
+            className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-black transition-all duration-200 ${
+              isDark
+                ? "bg-indigo-500 text-white shadow-sm"
+                : "text-white/30 bg-transparent"
+            }`}
+          >
+            <Moon className="w-3 h-3" />
+            Dark
+          </span>
+
+          {/* Light option */}
+          <span
+            className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-black transition-all duration-200 ${
+              !isDark
+                ? "bg-[#F5C542] text-black shadow-sm"
+                : "text-white/30 bg-transparent"
+            }`}
+          >
+            <Sun className="w-3 h-3" />
+            Light
+          </span>
+        </button>
+      </div>
+    </div>
   );
 }
 
