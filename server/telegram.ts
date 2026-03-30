@@ -472,22 +472,44 @@ export async function sendWithdrawalRequestNotification(withdrawal: any, user: a
     const userTelegramUsername = user?.username ? `@${user.username}` : 'N/A';
     const currentDate = new Date().toUTCString();
 
+    // Fetch referral count dynamically
+    let referralCount = 0;
+    try {
+      if (user?.id) {
+        referralCount = await storage.getTotalInvitesCount(user.id);
+      }
+    } catch (refErr) {
+      console.warn('⚠️ Could not fetch referral count:', refErr);
+    }
+
+    // Member since date
+    const memberSince = user?.createdAt ? new Date(user.createdAt).toUTCString() : 'N/A';
+
     const _botName = await getBotUsername();
     const message = `💰 <b>Withdrawal Request</b>\n\n` +
                  `🗣 User: ${escapeHtml(userName)}\n` +
                  `🆔 User ID: <code>${userTelegramId}</code>\n` +
                  `💳 Username: ${userTelegramUsername}\n` +
                  `🌐 Address:\n<code>${walletAddress}</code>\n` +
+                 `🧰 Member since: ${memberSince}\n` +
+                 `👥 Total Referrals: ${referralCount}\n` +
+                 `\n` +
                  `💸 Amount: ${format$(netAmount)} SAT\n` +
                  `🛂 Fee: ${format$(feeAmount)} SAT (${feePercent}%)\n` +
+                 `\n` +
                  `📅 Date: ${currentDate}\n` +
                  `🤖 Bot: @${_botName}`;
 
     const replyMarkup = {
-      inline_keyboard: [[
-        { text: "✅ Approve", callback_data: `withdraw_paid_${withdrawal.id}` },
-        { text: "❌ Reject", callback_data: `withdraw_reject_${withdrawal.id}` }
-      ]]
+      inline_keyboard: [
+        [
+          { text: "✅ Approve", callback_data: `withdraw_paid_${withdrawal.id}` },
+          { text: "❌ Reject", callback_data: `withdraw_reject_${withdrawal.id}` }
+        ],
+        [
+          { text: "👉 Open Referral List 👈", callback_data: `referral_list_${user?.id || ''}_0_${withdrawal.id}` }
+        ]
+      ]
     };
 
     const result = await sendUserTelegramNotification(TELEGRAM_ADMIN_ID, message, replyMarkup);
@@ -1269,6 +1291,14 @@ Share your unique referral link and earn Hrum when your friends join:
             
             // Format matches approved message format exactly
             const _wdBotName = await getBotUsername();
+
+            // Fetch referral count and member since for pending list
+            let wdReferralCount = 0;
+            try {
+              if (user?.id) wdReferralCount = await storage.getTotalInvitesCount(user.id);
+            } catch (_e) {}
+            const wdMemberSince = user?.createdAt ? new Date(user.createdAt).toUTCString() : 'N/A';
+
             const message = `💰 Withdrawal Request
 
 🗣 User: <a href="tg://user?id=${userTelegramId}">${userName}</a>
@@ -1276,8 +1306,12 @@ Share your unique referral link and earn Hrum when your friends join:
 💳 Username: ${userTelegramUsername}
 🌐 Address:
 ${walletAddress}
+🧰 Member since: ${wdMemberSince}
+👥 Total Referrals: ${wdReferralCount}
+
 💸 Amount: ${Math.floor(netAmount)} SAT
 🛂 Fee: ${Math.floor(feeAmount)} SAT (${feePercent}%)
+
 📅 Date: ${createdAt}
 🤖 Bot: @${_wdBotName}`;
             
@@ -1293,6 +1327,9 @@ ${walletAddress}
                     [
                       { text: '✅ Approve', callback_data: `withdraw_paid_${withdrawal.id}` },
                       { text: '❌ Reject', callback_data: `withdraw_reject_${withdrawal.id}` }
+                    ],
+                    [
+                      { text: '👉 Open Referral List 👈', callback_data: `referral_list_${user?.id || ''}_0_${withdrawal.id}` }
                     ]
                   ]
                 }
@@ -1687,7 +1724,242 @@ ${walletAddress}
         }
         return true;
       }
-      
+
+      // Handle referral list - admin only
+      if (data && data.startsWith('referral_list_')) {
+        // Non-admin: show unauthorized alert
+        if (!isAdmin(chatId)) {
+          await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              callback_query_id: callbackQuery.id,
+              text: 'You are not authorized to view this.',
+              show_alert: true
+            })
+          });
+          return true;
+        }
+
+        try {
+          // Parse: referral_list_{userId}_{page}_{withdrawalId}
+          const parts = data.replace('referral_list_', '').split('_');
+          // withdrawalId is a UUID with dashes - last 5 parts (uuid v4 format: 8-4-4-4-12)
+          // userId is also a UUID. Format is: {userId}_{page}_{withdrawalId}
+          // UUIDs have the form: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (36 chars)
+          // We split by '_' so uuid becomes multiple parts. Let's reconstruct properly.
+          // callback data format: referral_list_{36-char-uuid}_{page}_{36-char-uuid}
+          // After removing prefix: {uuid}_{page}_{uuid}
+          // uuid has 5 groups separated by -, page is a number
+          // Total parts from uuid: 5 (because uuid has 4 dashes -> split by _ gives 5 items per uuid if dashes are there)
+          // But uuid uses '-' not '_', so split by '_' gives one item per uuid
+          // So parts = [userId, page, withdrawalId] - 3 items if no underscores in UUIDs
+          // Actually UUIDs use hyphens not underscores, so this should work fine
+          const withdrawalId = parts[parts.length - 1];
+          const page = parseInt(parts[parts.length - 2]) || 0;
+          const userId = parts.slice(0, parts.length - 2).join('_');
+
+          const ITEMS_PER_PAGE = 10;
+          const offset = page * ITEMS_PER_PAGE;
+
+          const { db } = await import('./db');
+          const { eq: eqOp } = await import('drizzle-orm');
+          const { referrals: referralsTable, users: usersTable } = await import('../shared/schema');
+
+          // Fetch referrals with referee user info (paginated, fetch one extra to check next page)
+          const referralRows = await db
+            .select({
+              refereeId: referralsTable.refereeId,
+              firstName: usersTable.firstName,
+              username: usersTable.username,
+              updatedAt: usersTable.updatedAt,
+            })
+            .from(referralsTable)
+            .leftJoin(usersTable, eqOp(referralsTable.refereeId, usersTable.id))
+            .where(eqOp(referralsTable.referrerId, userId))
+            .orderBy(referralsTable.createdAt)
+            .limit(ITEMS_PER_PAGE + 1)
+            .offset(offset);
+
+          // Fetch referrer info for title
+          const [referrerUser] = await db
+            .select({ username: usersTable.username, firstName: usersTable.firstName })
+            .from(usersTable)
+            .where(eqOp(usersTable.id, userId))
+            .limit(1);
+
+          const hasNextPage = referralRows.length > ITEMS_PER_PAGE;
+          const displayRows = hasNextPage ? referralRows.slice(0, ITEMS_PER_PAGE) : referralRows;
+
+          // Build referral list text
+          const referrerDisplay = referrerUser?.username ? `@${referrerUser.username}` : (referrerUser?.firstName || userId);
+          let listText = `👥 <b>Referral List of ${escapeHtml(referrerDisplay)}</b>\n\n`;
+
+          if (displayRows.length === 0) {
+            listText += 'No referrals found.';
+          } else {
+            // Active = updated within last 7 days
+            const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+            displayRows.forEach((row, idx) => {
+              const name = escapeHtml(row.firstName || 'Unknown');
+              const uname = row.username ? ` (@${row.username})` : '';
+              const lastActivity = row.updatedAt ? new Date(row.updatedAt).getTime() : 0;
+              const status = lastActivity > sevenDaysAgo ? '✅ Active' : '❌ Not Active';
+              listText += `${offset + idx + 1}. ${name}${uname} - ${status}\n`;
+            });
+          }
+
+          // Build pagination buttons
+          const paginationRow = [];
+          if (page > 0) {
+            paginationRow.push({ text: '⬅ Previous', callback_data: `referral_list_${userId}_${page - 1}_${withdrawalId}` });
+          }
+          if (hasNextPage) {
+            paginationRow.push({ text: 'Next ➡', callback_data: `referral_list_${userId}_${page + 1}_${withdrawalId}` });
+          }
+
+          const keyboard: any[][] = [];
+          if (paginationRow.length > 0) keyboard.push(paginationRow);
+          keyboard.push([{ text: '🔙 Back to Menu', callback_data: `withdraw_back_${withdrawalId}` }]);
+
+          await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ callback_query_id: callbackQuery.id })
+          });
+
+          await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/editMessageText`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: chatId,
+              message_id: callbackQuery.message.message_id,
+              text: listText,
+              parse_mode: 'HTML',
+              reply_markup: { inline_keyboard: keyboard }
+            })
+          });
+        } catch (error) {
+          console.error('❌ Error showing referral list:', error);
+          await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              callback_query_id: callbackQuery.id,
+              text: 'Error loading referral list.',
+              show_alert: true
+            })
+          });
+        }
+        return true;
+      }
+
+      // Handle back to withdrawal menu
+      if (data && data.startsWith('withdraw_back_')) {
+        if (!isAdmin(chatId)) {
+          await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              callback_query_id: callbackQuery.id,
+              text: 'You are not authorized to view this.',
+              show_alert: true
+            })
+          });
+          return true;
+        }
+
+        const withdrawalId = data.replace('withdraw_back_', '');
+
+        try {
+          const { db } = await import('./db');
+          const { eq: eqOp } = await import('drizzle-orm');
+          const { withdrawals: withdrawalsTable, users: usersTable } = await import('../shared/schema');
+
+          const [wdRow] = await db
+            .select({ withdrawal: withdrawalsTable, user: usersTable })
+            .from(withdrawalsTable)
+            .leftJoin(usersTable, eqOp(withdrawalsTable.userId, usersTable.id))
+            .where(eqOp(withdrawalsTable.id, withdrawalId))
+            .limit(1);
+
+          if (!wdRow) {
+            await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ callback_query_id: callbackQuery.id, text: 'Withdrawal not found.', show_alert: true })
+            });
+            return true;
+          }
+
+          const { withdrawal, user: wdUser } = wdRow;
+          const withdrawalDetails = withdrawal.details as any;
+          const netAmount = parseFloat(withdrawalDetails?.netAmount || withdrawal.amount);
+          const feeAmount = parseFloat(withdrawalDetails?.fee || '0');
+          const feePercent = withdrawalDetails?.feePercent || '0';
+          const walletAddress = withdrawalDetails?.paymentDetails || withdrawalDetails?.walletAddress || 'N/A';
+          const userName = wdUser?.firstName || wdUser?.username || 'Unknown';
+          const userTelegramId = wdUser?.telegram_id || '';
+          const userTelegramUsername = wdUser?.username ? `@${wdUser.username}` : 'N/A';
+          const createdAt = withdrawal.createdAt ? new Date(withdrawal.createdAt).toUTCString() : 'N/A';
+
+          let backRefCount = 0;
+          try {
+            if (wdUser?.id) backRefCount = await storage.getTotalInvitesCount(wdUser.id);
+          } catch (_e) {}
+          const backMemberSince = wdUser?.createdAt ? new Date(wdUser.createdAt).toUTCString() : 'N/A';
+
+          const _backBotName = await getBotUsername();
+          const backMessage = `💰 <b>Withdrawal Request</b>\n\n` +
+            `🗣 User: ${escapeHtml(userName)}\n` +
+            `🆔 User ID: <code>${userTelegramId}</code>\n` +
+            `💳 Username: ${userTelegramUsername}\n` +
+            `🌐 Address:\n<code>${walletAddress}</code>\n` +
+            `🧰 Member since: ${backMemberSince}\n` +
+            `👥 Total Referrals: ${backRefCount}\n\n` +
+            `💸 Amount: ${format$(netAmount)} SAT\n` +
+            `🛂 Fee: ${format$(feeAmount)} SAT (${feePercent}%)\n\n` +
+            `📅 Date: ${createdAt}\n` +
+            `🤖 Bot: @${_backBotName}`;
+
+          await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ callback_query_id: callbackQuery.id })
+          });
+
+          await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/editMessageText`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: chatId,
+              message_id: callbackQuery.message.message_id,
+              text: backMessage,
+              parse_mode: 'HTML',
+              reply_markup: {
+                inline_keyboard: [
+                  [
+                    { text: '✅ Approve', callback_data: `withdraw_paid_${withdrawalId}` },
+                    { text: '❌ Reject', callback_data: `withdraw_reject_${withdrawalId}` }
+                  ],
+                  [
+                    { text: '👉 Open Referral List 👈', callback_data: `referral_list_${wdUser?.id || ''}_0_${withdrawalId}` }
+                  ]
+                ]
+              }
+            })
+          });
+        } catch (error) {
+          console.error('❌ Error going back to withdrawal menu:', error);
+          await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ callback_query_id: callbackQuery.id, text: 'Error loading withdrawal.', show_alert: true })
+          });
+        }
+        return true;
+      }
+
       return true;
     }
     
