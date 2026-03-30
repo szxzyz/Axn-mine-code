@@ -4,7 +4,12 @@ import { storage } from './storage';
 
 const isAdmin = (telegramId: string): boolean => {
   const adminId = process.env.TELEGRAM_ADMIN_ID;
-  return adminId === telegramId;
+  if (!adminId) {
+    console.warn('⚠️ TELEGRAM_ADMIN_ID is not set - admin access disabled');
+    return false;
+  }
+  // Trim whitespace and compare as strings to avoid type mismatch issues
+  return adminId.trim() === telegramId.trim();
 };
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
@@ -456,10 +461,16 @@ function escapeHtml(text: string): string {
 }
 
 export async function sendWithdrawalRequestNotification(withdrawal: any, user: any): Promise<boolean> {
-  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_ADMIN_ID) {
-    console.error('❌ Telegram bot token or admin ID not configured for withdrawal request notification');
+  if (!TELEGRAM_BOT_TOKEN) {
+    console.error('❌ TELEGRAM_BOT_TOKEN is not set - cannot send withdrawal notification');
     return false;
   }
+  if (!TELEGRAM_ADMIN_ID) {
+    console.error('❌ TELEGRAM_ADMIN_ID is not set - cannot send withdrawal notification to admin');
+    return false;
+  }
+
+  console.log(`📤 Sending withdrawal request notification to admin ${TELEGRAM_ADMIN_ID} for withdrawal ${withdrawal?.id}...`);
 
   try {
     const netAmount = parseFloat(withdrawal.amount);
@@ -1000,6 +1011,24 @@ export async function handleTelegramMessage(update: any): Promise<boolean> {
       const callbackQuery = update.callback_query;
       const chatId = callbackQuery.from.id.toString();
       const data = callbackQuery.data;
+
+      // Helper: always answer callback to prevent button freezing
+      const answerCallback = async (text?: string, showAlert?: boolean) => {
+        try {
+          await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              callback_query_id: callbackQuery.id,
+              ...(text ? { text, show_alert: showAlert || false } : {})
+            })
+          });
+        } catch (e) {
+          console.error('❌ Failed to answer callback query:', e);
+        }
+      };
+
+      console.log(`🔘 Callback query received: data="${data}" from chatId=${chatId}`);
       
       if (data === 'invite_friend') {
         try {
@@ -1228,6 +1257,9 @@ Share your unique referral link and earn Hrum when your friends join:
       
       // Handle pending withdrawals button - show all pending withdrawal requests
       if (data && (data === 'admin_pending_withdrawals' || data.startsWith('admin_pending_withdrawals_page_')) && isAdmin(chatId)) {
+        // Answer callback immediately to prevent button freezing
+        await answerCallback();
+        console.log(`📋 Admin ${chatId} requested pending withdrawals list`);
         try {
           const { db } = await import('./db');
           const { eq } = await import('drizzle-orm');
@@ -1238,6 +1270,8 @@ Share your unique referral link and earn Hrum when your friends join:
           const currentPage = pageMatch ? parseInt(pageMatch[1]) : 0;
           const itemsPerPage = 10;
           const offset = currentPage * itemsPerPage;
+          
+          console.log(`🔍 Fetching pending withdrawals page ${currentPage}...`);
           
           // Fetch pending withdrawals with user information
           const pendingWithdrawals = await db
@@ -1252,12 +1286,7 @@ Share your unique referral link and earn Hrum when your friends join:
             .limit(itemsPerPage + 1) // Fetch one extra to check if there are more pages
             .offset(offset);
           
-          // Answer callback query
-          await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ callback_query_id: callbackQuery.id })
-          });
+          console.log(`✅ Found ${pendingWithdrawals.length} pending withdrawals`);
           
           // Check if there are no pending withdrawals
           if (pendingWithdrawals.length === 0) {
@@ -1374,13 +1403,14 @@ ${walletAddress}
           
         } catch (error) {
           console.error('❌ Error fetching pending withdrawals:', error);
-          await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+          // Callback already answered at top of handler, just send error message
+          await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
-              callback_query_id: callbackQuery.id,
-              text: 'Error loading withdrawals',
-              show_alert: true
+              chat_id: chatId,
+              text: '❌ <b>Error loading pending withdrawals.</b> Please try again.',
+              parse_mode: 'HTML'
             })
           });
         }
@@ -1960,6 +1990,9 @@ ${walletAddress}
         return true;
       }
 
+      // Catch-all: always answer any unhandled callback query to prevent button freezing
+      console.log(`⚠️ Unhandled callback query: data="${data}" from chatId=${chatId}`);
+      await answerCallback();
       return true;
     }
     
