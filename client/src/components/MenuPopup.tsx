@@ -6,11 +6,13 @@ import {
   ChevronRight, ArrowLeft, CheckCircle, XCircle, Clock, Loader2,
   Youtube, Instagram, Video, Link2, CheckSquare, Square, Plus, ScrollText, AlertCircle,
   BarChart3, Scale, Sparkles, Zap, TrendingUp, Activity, RefreshCw, Star,
-  Moon, Sun,
+  Moon, Sun, Crown,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
+import { useAdmin } from "@/hooks/useAdmin";
+import { useLocation } from "wouter";
 
 interface MenuPopupProps {
   onClose: () => void;
@@ -43,6 +45,8 @@ function fmtAge(days: number): string {
 export default function MenuPopup({ onClose }: MenuPopupProps) {
   const { user } = useAuth();
   const { theme, setTheme } = useTheme();
+  const { isAdmin } = useAdmin();
+  const [, setLocation] = useLocation();
   const photoUrl = typeof window !== "undefined" && (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.photo_url;
   const name = (user as any)?.firstName ? `${(user as any).firstName}${(user as any).lastName ? " " + (user as any).lastName : ""}` : (user as any)?.username || "User";
   const uid = (user as any)?.referralCode || (user as any)?.id?.slice(0, 8) || "—";
@@ -198,6 +202,13 @@ export default function MenuPopup({ onClose }: MenuPopupProps) {
                 label="Legal Info"
                 onClick={() => setOverlay("legal")}
               />
+              {isAdmin && (
+                <MenuItem
+                  icon={<Crown className="w-5 h-5 text-amber-400" />}
+                  label="Admin Panel"
+                  onClick={() => { onClose(); setLocation("/admin"); }}
+                />
+              )}
               <ThemeMenuItem theme={theme} setTheme={setTheme} />
             </div>
 
