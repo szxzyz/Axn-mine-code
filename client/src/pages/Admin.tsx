@@ -1231,100 +1231,21 @@ function SettingsSection() {
 /* ─── COUNTRIES ───────────────────────────────────────────────────────────── */
 
 function CountrySection() {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [search, setSearch] = useState("");
-  const [updating, setUpdating] = useState<Set<string>>(new Set());
-
-  const { data: countriesData, isLoading } = useQuery<{ success: boolean; countries: { code: string; name: string }[] }>({
-    queryKey: ["/api/countries"],
-    queryFn: () => fetch("/api/countries").then(r => r.json()),
-  });
-
-  const { data: blockedData } = useQuery<{ success: boolean; blockedCountries: string[] }>({
-    queryKey: ["/api/admin/blocked-countries"],
-    queryFn: () => apiRequest("GET", "/api/admin/blocked-countries").then(r => r.json()),
-    refetchInterval: 30000,
-  });
-
-  const countries: { code: string; name: string }[] = countriesData?.countries || [];
-  const blockedSet = new Set<string>(blockedData?.blockedCountries || []);
-
-  const filtered = countries.filter(c =>
-    !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.code.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const toggleCountry = async (code: string, blocked: boolean) => {
-    setUpdating(prev => new Set(prev).add(code));
-    try {
-      const endpoint = blocked ? "/api/admin/unblock-country" : "/api/admin/block-country";
-      const r = await apiRequest("POST", endpoint, { countryCode: code });
-      const d = await r.json();
-      if (d.success) {
-        queryClient.invalidateQueries({ queryKey: ["/api/admin/blocked-countries"] });
-        toast({ title: blocked ? `Unblocked ${code}` : `Blocked ${code}` });
-      } else {
-        toast({ title: d.message || "Failed", variant: "destructive" });
-      }
-    } catch {
-      toast({ title: "Error", variant: "destructive" });
-    } finally {
-      setUpdating(prev => { const s = new Set(prev); s.delete(code); return s; });
-    }
-  };
-
-  if (isLoading) {
-    return <div className="space-y-2">{[...Array(6)].map((_, i) => <div key={i} className="bg-[#0f0f0f] h-12 rounded-xl animate-pulse" />)}</div>;
-  }
+  const [, setLocation] = useLocation();
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-gray-400">{blockedSet.size} countries blocked</p>
+    <div className="flex flex-col items-center justify-center py-12 gap-4">
+      <Globe className="w-12 h-12 text-blue-400" />
+      <div className="text-center">
+        <p className="text-white font-semibold text-sm mb-1">Country Block Controls</p>
+        <p className="text-gray-400 text-xs">Manage blocked countries from the dedicated page.</p>
       </div>
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
-        <Input
-          className="pl-8 h-8 text-xs bg-[#0f0f0f] border-white/10"
-          placeholder="Search country..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
-      </div>
-      <div className="space-y-1.5 max-h-[60vh] overflow-y-auto pr-1">
-        {filtered.map(c => {
-          const isBlocked = blockedSet.has(c.code);
-          const isUpdating = updating.has(c.code);
-          return (
-            <div
-              key={c.code}
-              className={`flex items-center justify-between px-3 py-2 rounded-xl border transition-all ${
-                isBlocked ? "bg-red-900/10 border-red-600/20" : "bg-[#0f0f0f] border-white/8"
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-base">{c.code === "US" ? "🇺🇸" : c.code === "RU" ? "🇷🇺" : c.code === "CN" ? "🇨🇳" : "🌐"}</span>
-                <div>
-                  <p className="text-xs font-medium text-white">{c.name}</p>
-                  <p className="text-[10px] text-gray-500">{c.code}</p>
-                </div>
-              </div>
-              <Button
-                size="sm"
-                disabled={isUpdating}
-                onClick={() => toggleCountry(c.code, isBlocked)}
-                className={`h-7 text-[10px] px-2.5 ${
-                  isBlocked
-                    ? "bg-green-800 hover:bg-green-700 text-white"
-                    : "bg-red-800 hover:bg-red-700 text-white"
-                }`}
-              >
-                {isUpdating ? "..." : isBlocked ? "Unblock" : "Block"}
-              </Button>
-            </div>
-          );
-        })}
-      </div>
+      <Button
+        onClick={() => setLocation("/admin/country-controls")}
+        className="bg-blue-600 hover:bg-blue-500 text-white text-sm px-6"
+      >
+        Open Country Controls
+      </Button>
     </div>
   );
 }
