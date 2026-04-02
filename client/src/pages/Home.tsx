@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import Layout from "@/components/Layout";
 import AdWatchingSection from "@/components/AdWatchingSection";
@@ -11,7 +11,8 @@ import { SettingsPopup } from "@/components/SettingsPopup";
 import InvitePopup from "@/components/InvitePopup";
 import { useLanguage } from "@/hooks/useLanguage";
 import { MatrixMiningCounter } from "@/components/MatrixMiningCounter";
-import { Award, Wallet, RefreshCw, Flame, Ticket, Info, User as UserIcon, Clock, Loader2, Gift, Rocket, X, Bug, DollarSign, Coins, Send, Users, Check, ExternalLink, Plus, CalendarCheck, Bell, Star, Play, Zap, Settings, Film, Tv, ClipboardList, UserPlus, Share2, Copy, HandCoins, LogOut, Download, ShieldCheck, Menu } from "lucide-react";
+import Header from "@/components/Header";
+import { Award, Wallet, RefreshCw, Flame, Ticket, Info, User as UserIcon, Clock, Loader2, Gift, Rocket, X, Bug, DollarSign, Coins, Send, Users, Check, ExternalLink, Plus, CalendarCheck, Bell, Star, Play, Zap, Settings, Film, Tv, ClipboardList, UserPlus, Share2, Copy, LogOut, Download, ShieldCheck, Menu } from "lucide-react";
 import { DiamondIcon } from "@/components/DiamondIcon";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,7 +23,6 @@ import { Label } from "@/components/ui/label";
 import { AnimatePresence, motion } from "framer-motion";
 import WithdrawalPopup from "@/components/WithdrawalPopup";
 import MenuPopup from "@/components/MenuPopup";
-import { SatPriceChart } from "@/components/SatPriceChart";
 
 
 // Unified Task Interface
@@ -98,6 +98,18 @@ export default function Home() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(88);
+
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const update = () => setHeaderHeight(el.offsetHeight);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const [selectedConvertType, setSelectedConvertType] = useState<'' | 'BUG'>('');
   const [convertAmount, setConvertAmount] = useState<string>("");
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
@@ -1145,49 +1157,40 @@ export default function Home() {
 
   return (
     <Layout>
-      <main className="max-w-md mx-auto px-4 pt-4 pb-24">
+      <Header ref={headerRef} onMenuOpen={() => setMenuOpen(true)} />
+      <main className="max-w-md mx-auto px-4 pb-24" style={{ paddingTop: headerHeight + 8 }}>
         {/* Balance & Stats Section */}
         <div className="mb-4 relative">
-          <SatPriceChart />
 
           <div className="w-full">
               <div className="bg-[#141414] rounded-2xl p-4 border border-white/5 mb-4">
                 <div className="flex justify-between items-center mb-4">
-                  <span className="text-[#8E8E93] text-[10px] font-black uppercase tracking-widest">{t('mining_status')}</span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={toggleBalanceFormat}
-                      className="flex items-center gap-1 px-2 py-0.5 rounded-full border transition-all active:scale-95"
-                      style={{
-                        background: balanceFormat === 'BTC' ? 'rgba(245,197,66,0.12)' : 'rgba(255,255,255,0.06)',
-                        borderColor: balanceFormat === 'BTC' ? 'rgba(245,197,66,0.4)' : 'rgba(255,255,255,0.12)',
-                      }}
-                    >
-                      <span
-                        className="text-[9px] font-black uppercase tracking-widest"
-                        style={{ color: balanceFormat === 'SAT' ? '#ffffff' : 'rgba(255,255,255,0.4)' }}
-                      >SAT</span>
-                      <span className="text-[9px] text-white/20 font-black">/</span>
-                      <span
-                        className="text-[9px] font-black uppercase tracking-widest"
-                        style={{ color: balanceFormat === 'BTC' ? '#F5C542' : 'rgba(255,255,255,0.4)' }}
-                      >BTC</span>
-                    </button>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
-                      <span className="text-white text-[10px] font-black tabular-nums">{miningRatePerHour.toFixed(4)}</span>
-                      <span className="text-[#8E8E93] text-[9px] font-bold">SAT/h</span>
-                    </div>
+                  <button
+                    onClick={toggleBalanceFormat}
+                    className="flex items-center gap-1 px-2 py-0.5 rounded-full border transition-all active:scale-95"
+                    style={{
+                      background: balanceFormat === 'BTC' ? 'rgba(245,197,66,0.12)' : 'rgba(255,255,255,0.06)',
+                      borderColor: balanceFormat === 'BTC' ? 'rgba(245,197,66,0.4)' : 'rgba(255,255,255,0.12)',
+                    }}
+                  >
+                    <span
+                      className="text-[9px] font-black uppercase tracking-widest"
+                      style={{ color: balanceFormat === 'SAT' ? '#ffffff' : 'rgba(255,255,255,0.4)' }}
+                    >SAT</span>
+                    <span className="text-[9px] text-white/20 font-black">/</span>
+                    <span
+                      className="text-[9px] font-black uppercase tracking-widest"
+                      style={{ color: balanceFormat === 'BTC' ? '#F5C542' : 'rgba(255,255,255,0.4)' }}
+                    >BTC</span>
+                  </button>
+                  <div className="flex items-center gap-1">
+                    <span className="text-white text-sm font-black tabular-nums">{miningRatePerHour.toFixed(4)}</span>
+                    <span className="text-[#8E8E93] text-[11px] font-bold">SAT/h</span>
                   </div>
                 </div>
                 
                 <div className="mb-2">
                   <MatrixMiningCounter miningAmount={miningAmount} miningRate={miningRate} balanceFormat={balanceFormat} />
-                </div>
-                <div className="flex justify-center mb-2">
-                  <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: balanceFormat === 'BTC' ? '#F5C542' : '#8E8E93' }}>
-                    {balanceFormat === 'BTC' ? 'BTC Balance' : 'SAT Balance'}
-                  </span>
                 </div>
 
                 {activeBoosts.length > 0 && (
@@ -1243,13 +1246,7 @@ export default function Home() {
                     {claimMiningMutation.isPending ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
-                      <>
-                        <HandCoins className="w-4 h-4" />
-                        <span>Claim</span>
-                        {canClaimMining && (
-                          <span className="opacity-70">· {Math.floor(miningAmount).toLocaleString()} SAT</span>
-                        )}
-                      </>
+                      <span>Claim</span>
                     )}
                   </button>
                 </div>
