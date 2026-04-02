@@ -229,8 +229,7 @@ export default function InvitePopup({ onClose }: InvitePopupProps) {
                         <p className="text-white/35 text-[10px] mt-0.5">ID: {r.refereeId}</p>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <p className="text-[#F5C542] text-xs font-black">{r.totalSatsEarned.toLocaleString()} SAT</p>
-                        {r.isActive && <p className="text-green-400 text-[10px] font-semibold mt-0.5">+0.02/h</p>}
+                        {r.isActive && <p className="text-green-400 text-xs font-semibold">+0.02/h</p>}
                       </div>
                     </div>
 
