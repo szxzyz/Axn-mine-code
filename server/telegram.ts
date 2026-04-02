@@ -1510,18 +1510,6 @@ ${walletAddress}
               })
             });
             
-            // Post approval to group chat
-            const GROUP_CHAT_ID = '-1002769424144';
-            await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                chat_id: GROUP_CHAT_ID,
-                text: adminSuccessMessage,
-                parse_mode: 'HTML'
-              })
-            });
-            
             await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
