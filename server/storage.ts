@@ -1856,12 +1856,12 @@ export class DatabaseStorage implements IStorage {
       // Fetch users with real-time referral count from the referrals table
       const allUsers = await db.select({
         id: users.id,
-        telegramId: users.telegram_id,
+        telegram_id: users.telegram_id,
         username: users.username,
         firstName: users.firstName,
         lastName: users.lastName,
         balance: users.balance,
-        totalEarnings: users.total_earnings, // Fixed field name
+        totalEarnings: users.total_earnings,
         tonBalance: users.tonBalance,
         bugBalance: users.bugBalance,
         adsWatched: users.adsWatched,
@@ -1872,8 +1872,12 @@ export class DatabaseStorage implements IStorage {
         banned: users.banned,
         bannedReason: users.bannedReason,
         createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
         totalWithdrawn: users.totalClaimedReferralBonus,
-        totalEarned: users.total_earned, // Fixed field name
+        totalEarned: users.total_earned,
+        friendsInvited: users.friendsInvited,
+        miningRate: users.miningRate,
+        referralMiningBoost: users.referralMiningBoost,
         referralCount: sql<number>`(SELECT count(*) FROM ${referrals} WHERE ${referrals.referrerId} = ${users.id})`
       }).from(users).orderBy(desc(users.createdAt));
       
@@ -1884,7 +1888,10 @@ export class DatabaseStorage implements IStorage {
         tonBalance: user.tonBalance?.toString() || '0',
         bugBalance: user.bugBalance?.toString() || '0',
         totalWithdrawn: user.totalWithdrawn?.toString() || '0',
-        totalEarned: user.totalEarned?.toString() || '0'
+        totalEarned: user.totalEarned?.toString() || '0',
+        miningRate: user.miningRate?.toString() || '0',
+        referralMiningBoost: user.referralMiningBoost?.toString() || '0',
+        friendsInvited: user.friendsInvited ?? 0,
       }));
     } catch (error) {
       console.error('❌ Error in getAllUsersWithStats:', error);

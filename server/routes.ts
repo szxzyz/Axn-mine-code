@@ -1120,10 +1120,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // 2. CHANNEL JOIN CHECK
-      // Check membership in channel only
+      // 2. CHANNEL AND GROUP JOIN CHECK
       const channelMember = await verifyChannelMembership(userId, channelConfig.channelId, botToken);
-      const groupMember = true;
+      const groupMember = await verifyChannelMembership(userId, channelConfig.groupId, botToken);
       
       const isVerified = channelMember && groupMember;
       
@@ -2208,17 +2207,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!referee) continue;
 
         let channelMember = false;
-        const groupMember = true;
+        let groupMember = false;
 
         // Check membership if bot token is available and referee has telegram_id
         if (botToken && referee.telegram_id) {
           try {
             const telegramNumericId = parseInt(referee.telegram_id, 10);
             channelMember = await verifyChannelMembership(telegramNumericId, channelConfig.channelId, botToken);
+            groupMember = await verifyChannelMembership(telegramNumericId, channelConfig.groupId, botToken);
           } catch {}
         }
 
-        const isActive = ref.status === 'completed' && channelMember;
+        const isActive = ref.status === 'completed' && channelMember && groupMember;
         const totalSatsEarned = Math.round(parseFloat(ref.rewardAmount || '0'));
 
         result.push({
@@ -2270,12 +2270,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const telegramNumericId = parseInt(referee.telegram_id, 10);
         let channelMember = false;
+        let groupMember = false;
 
         try {
           channelMember = await verifyChannelMembership(telegramNumericId, channelConfig.channelId, botToken);
+          groupMember = await verifyChannelMembership(telegramNumericId, channelConfig.groupId, botToken);
         } catch {}
 
-        if (channelMember) {
+        if (channelMember && groupMember) {
           activeCount++;
         }
       }
