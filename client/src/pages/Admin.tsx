@@ -7,10 +7,6 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAdmin } from "@/hooks/useAdmin";
 import Layout from "@/components/Layout";
-import {
-  AreaChart, Area, BarChart, Bar, LineChart, Line,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-} from "recharts";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -218,14 +214,6 @@ function SummarySection({ stats, isLoading }: { stats: AdminStats | undefined; i
     { icon: GitBranch, label: "Users With Referrals", value: fmt(stats?.usersWithReferrals ?? 0), sub: "have invited friends", color: "bg-teal-600" },
   ];
 
-  const { data: chartRes } = useQuery({
-    queryKey: ["/api/admin/analytics/chart"],
-    queryFn: () => apiRequest("GET", "/api/admin/analytics/chart").then(r => r.json()),
-    refetchInterval: 60000,
-  });
-
-  const chartData: any[] = chartRes?.data || [];
-
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -247,71 +235,6 @@ function SummarySection({ stats, isLoading }: { stats: AdminStats | undefined; i
         ))}
       </div>
 
-      {/* Charts */}
-      <div className="space-y-4">
-        <ChartCard title="⛏ Mining Activity (SAT)" color="#f97316">
-          <AreaChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" />
-            <XAxis dataKey="period" tick={{ fontSize: 10, fill: "#666" }} />
-            <YAxis tick={{ fontSize: 10, fill: "#666" }} tickFormatter={v => fmt(v)} />
-            <Tooltip contentStyle={{ background: "#111", border: "1px solid #222", borderRadius: 8, fontSize: 11 }} formatter={(v: any) => [fmtSat(v), "Mining"]} />
-            <Area type="monotone" dataKey="earnings" stroke="#f97316" fill="#f9731620" strokeWidth={2} />
-          </AreaChart>
-        </ChartCard>
-
-        <ChartCard title="👁 Daily Ads Watched" color="#8b5cf6">
-          <BarChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" />
-            <XAxis dataKey="period" tick={{ fontSize: 10, fill: "#666" }} />
-            <YAxis tick={{ fontSize: 10, fill: "#666" }} tickFormatter={v => fmt(v)} />
-            <Tooltip contentStyle={{ background: "#111", border: "1px solid #222", borderRadius: 8, fontSize: 11 }} formatter={(v: any) => [fmt(v), "Ads"]} />
-            <Bar dataKey="adsWatched" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ChartCard>
-
-        <ChartCard title="👥 Daily Active Users" color="#3b82f6">
-          <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" />
-            <XAxis dataKey="period" tick={{ fontSize: 10, fill: "#666" }} />
-            <YAxis tick={{ fontSize: 10, fill: "#666" }} tickFormatter={v => fmt(v)} />
-            <Tooltip contentStyle={{ background: "#111", border: "1px solid #222", borderRadius: 8, fontSize: 11 }} formatter={(v: any) => [fmt(v), "Active Users"]} />
-            <Line type="monotone" dataKey="activeUsers" stroke="#3b82f6" strokeWidth={2} dot={{ fill: "#3b82f6", r: 3 }} />
-          </LineChart>
-        </ChartCard>
-
-        <ChartCard title="💸 Daily Withdrawals (SAT)" color="#ef4444">
-          <BarChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" />
-            <XAxis dataKey="period" tick={{ fontSize: 10, fill: "#666" }} />
-            <YAxis tick={{ fontSize: 10, fill: "#666" }} tickFormatter={v => fmtSat(v)} />
-            <Tooltip contentStyle={{ background: "#111", border: "1px solid #222", borderRadius: 8, fontSize: 11 }} formatter={(v: any) => [fmtSat(v), "Withdrawn"]} />
-            <Bar dataKey="withdrawals" fill="#ef4444" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ChartCard>
-
-        <ChartCard title="🔗 Daily Referrals" color="#14b8a6">
-          <AreaChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" />
-            <XAxis dataKey="period" tick={{ fontSize: 10, fill: "#666" }} />
-            <YAxis tick={{ fontSize: 10, fill: "#666" }} tickFormatter={v => fmt(v)} />
-            <Tooltip contentStyle={{ background: "#111", border: "1px solid #222", borderRadius: 8, fontSize: 11 }} formatter={(v: any) => [fmt(v), "Referrals"]} />
-            <Area type="monotone" dataKey="referrals" stroke="#14b8a6" fill="#14b8a620" strokeWidth={2} />
-          </AreaChart>
-        </ChartCard>
-      </div>
-    </div>
-  );
-}
-
-function ChartCard({ title, color, children }: { title: string; color: string; children: React.ReactElement }) {
-  return (
-    <div className="bg-[#0f0f0f] border border-white/8 rounded-2xl p-4">
-      <p className="text-xs font-semibold mb-3" style={{ color }}>{title}</p>
-      <div className="h-44 w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          {children}
-        </ResponsiveContainer>
-      </div>
     </div>
   );
 }
