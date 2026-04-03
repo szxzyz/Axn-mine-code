@@ -22,7 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AnimatePresence, motion } from "framer-motion";
 import WithdrawalPopup from "@/components/WithdrawalPopup";
-import HomeMenuSection from "@/components/HomeMenuSection";
+import MenuPopup from "@/components/MenuPopup";
 import TaskPopup from "@/components/TaskPopup";
 
 
@@ -99,6 +99,7 @@ export default function Home() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [taskOpen, setTaskOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const headerRef = useRef<HTMLDivElement>(null);
   const [headerHeight, setHeaderHeight] = useState(88);
 
@@ -1261,9 +1262,23 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Menu Section - directly on home page */}
+        {/* Tasks Entry Card */}
         <div className="mb-4">
-          <HomeMenuSection />
+          <button
+            onClick={() => setTaskOpen(true)}
+            className="w-full bg-[#141414] border border-white/5 rounded-2xl p-4 flex items-center gap-4 active:scale-[0.98] transition-all"
+          >
+            <div className="w-11 h-11 rounded-xl bg-[#F5C542]/10 border border-[#F5C542]/20 flex items-center justify-center flex-shrink-0">
+              <TaskIcon className="w-5 h-5 text-[#F5C542]" />
+            </div>
+            <div className="flex-1 text-left">
+              <p className="text-white font-black text-sm">Daily Tasks</p>
+              <p className="text-white/40 text-[11px] mt-0.5">Complete tasks to boost your mining rate</p>
+            </div>
+            <div className="text-white/20">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 18 6-6-6-6"/></svg>
+            </div>
+          </button>
         </div>
 
       </main>
@@ -1457,17 +1472,17 @@ export default function Home() {
             {/* Divider */}
             <div className="w-px h-8 bg-white/5 flex-shrink-0" />
 
-            {/* Task */}
+            {/* Menu */}
             <button
-              onClick={() => setTaskOpen(true)}
+              onClick={() => setMenuOpen(true)}
               className="group flex-1 flex flex-col items-center py-4 gap-1.5 active:opacity-70 transition-opacity"
             >
-              <TaskIcon
+              <Settings
                 className="text-white/40 group-hover:text-white/70 transition-colors"
                 style={{ width: 20, height: 20, strokeWidth: 1.6 }}
               />
               <span className="text-[9px] font-semibold text-white/30 tracking-[0.12em] uppercase group-hover:text-white/50 transition-colors">
-                Task
+                Menu
               </span>
             </button>
           </div>
@@ -1482,6 +1497,7 @@ export default function Home() {
 
       {inviteOpen && <InvitePopup onClose={() => setInviteOpen(false)} />}
       {taskOpen && <TaskPopup onClose={() => setTaskOpen(false)} />}
+      {menuOpen && <MenuPopup onClose={() => setMenuOpen(false)} />}
 
       <WithdrawalPopup 
         open={withdrawPopupOpen}
