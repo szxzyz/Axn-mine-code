@@ -13,7 +13,6 @@ import {
   TrendingUp, 
   Send, 
   Bot as BotIcon, 
-  ArrowLeft, 
   Trash2,
   Info,
   CheckCircle2,
@@ -312,11 +311,6 @@ export default function CreateTask() {
       return;
     }
 
-    if (taskType !== "partner" && !hasSufficientBalance) {
-      showNotification(`Insufficient ${paymentCurrency} balance`, "error");
-      return;
-    }
-
     if (taskType === "channel" && !isVerified) {
       showNotification("Please verify your channel first", "error");
       return;
@@ -361,6 +355,22 @@ export default function CreateTask() {
     );
   }
 
+  if (!isAdmin) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 px-6">
+          <p className="text-white/40 text-sm font-bold text-center">Admin access required to create tasks.</p>
+          <Button
+            onClick={() => setLocation("/")}
+            className="btn-primary px-8"
+          >
+            Go Home
+          </Button>
+        </div>
+      </Layout>
+    );
+  }
+
   const myTasks = myTasksData?.tasks || [];
   const activeMyTasks = myTasks.filter(t => t.status === "running" || t.status === "under_review" || t.status === "paused");
   const completedMyTasks = myTasks.filter(t => t.status === "completed" || t.status === "rejected");
@@ -368,21 +378,7 @@ export default function CreateTask() {
   return (
     <Layout>
       <TopUpPopup open={topUpPopupOpen} onOpenChange={setTopUpPopupOpen} />
-      <main ref={mainRef} className="max-w-md mx-auto px-4 pt-4 pb-24">
-        {!isAdmin && (
-          <div className="flex items-center justify-between mb-4 p-3 bg-gradient-to-r from-[#1A1A1A] to-[#0D1117] rounded-xl border border-[#2A2A2A] shadow-lg">
-            <div className="flex items-center gap-2">
-              <img src="/images/ton.png" alt="" className="w-5 h-5 object-cover rounded-full" />
-              <span className="text-sm font-semibold text-white">{tonBalance.toFixed(4)} TON</span>
-            </div>
-            <button 
-              onClick={() => setTopUpPopupOpen(true)}
-              className="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-[#4cd3ff] to-[#007BFF] hover:from-[#6ddeff] hover:to-[#1a8cff] text-white text-xs font-semibold rounded-lg transition-all shadow-md"
-            >
-              Top Up
-            </button>
-          </div>
-        )}
+      <main ref={mainRef} className="max-w-md mx-auto px-4 pt-4 pb-32">
         <div className="grid grid-cols-2 gap-2 mb-6">
           <Button
             type="button"
@@ -553,13 +549,9 @@ export default function CreateTask() {
                 <Button
                   type="submit"
                   className="w-full btn-primary"
-                  disabled={createTaskMutation.isPending || (taskType !== "partner" && !hasSufficientBalance) || (taskType === "channel" && !isVerified)}
+                  disabled={createTaskMutation.isPending || (taskType === "channel" && !isVerified)}
                 >
-                  {createTaskMutation.isPending 
-                    ? "Publishing..." 
-                    : taskType === "partner" 
-                      ? "Publish Partner Task" 
-                      : `Pay ${totalCostValue.toFixed(4)} ${paymentCurrency} & Publish`}
+                  {createTaskMutation.isPending ? "Publishing..." : "Publish Task"}
                 </Button>
               </form>
             )}
@@ -809,6 +801,16 @@ export default function CreateTask() {
           </DrawerContent>
         </Drawer>
       </main>
+
+      {/* Bottom Back Button — same style as InvitePopup / TaskPopup */}
+      <div className="fixed bottom-0 left-0 right-0 px-5 py-4 border-t border-white/5 bg-[#0a0a0a]">
+        <button
+          onClick={() => setLocation("/")}
+          className="w-full h-12 bg-[#141414] border border-white/8 rounded-2xl font-black uppercase tracking-wider text-white text-sm hover:bg-white/5 transition-all active:scale-[0.98]"
+        >
+          Back
+        </button>
+      </div>
     </Layout>
   );
 }

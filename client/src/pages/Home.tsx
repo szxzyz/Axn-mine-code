@@ -1195,30 +1195,6 @@ export default function Home() {
                   <MatrixMiningCounter miningAmount={miningAmount} miningRate={miningRate} balanceFormat={balanceFormat} />
                 </div>
 
-                {activeBoosts.length > 0 && (
-                  <div className="mb-4 space-y-2 max-h-[150px] overflow-y-auto pr-1 custom-scrollbar">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Clock className="w-3 h-3 text-[#8E8E93]" />
-                      <span className="text-[#8E8E93] text-[9px] font-black uppercase tracking-widest">Active Boosters</span>
-                    </div>
-                    <div className="grid grid-cols-1 gap-2">
-                      {activeBoosts.map((boost: any) => (
-                        <div key={boost.id} className="bg-white/5 rounded-xl p-3 border border-white/5 flex justify-between items-center">
-                          <div className="space-y-0.5 text-left">
-                            <div className="text-white text-[10px] font-black uppercase tracking-tight">Mining Boost</div>
-                            <div className="text-white text-[9px] font-bold">+{boost.miningRate} SAT/h</div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-[#8E8E93] text-[8px] font-black uppercase tracking-widest">Expires In</div>
-                            <div className="text-white text-[10px] font-bold tabular-nums">
-                              {formatRemainingTime(boost.remainingTime)}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
                 <div className="pt-4 border-t border-white/5">
                   <div className="flex items-center justify-between mb-3 px-0.5">
@@ -1269,7 +1245,7 @@ export default function Home() {
             className="w-full bg-[#141414] border border-white/5 rounded-2xl p-4 flex items-center gap-4 active:scale-[0.98] transition-all"
           >
             <div className="w-11 h-11 rounded-xl bg-[#F5C542]/10 border border-[#F5C542]/20 flex items-center justify-center flex-shrink-0">
-              <TaskIcon className="w-5 h-5 text-[#F5C542]" />
+              <Zap className="w-5 h-5 text-[#F5C542]" />
             </div>
             <div className="flex-1 text-left">
               <p className="text-white font-black text-sm">Daily Tasks</p>
