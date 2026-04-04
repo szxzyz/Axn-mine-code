@@ -5941,86 +5941,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           task 
         });
       } else {
-        // Regular users: TON-based costs from admin settings
-        console.log('👤 Regular user task creation - using  balance');
-        
-        // Get  cost per click from admin settings
-        const channelTonCostSetting = await db.select().from(adminSettings).where(eq(adminSettings.settingKey, 'channel_task_cost_ton')).limit(1);
-        const botTonCostSetting = await db.select().from(adminSettings).where(eq(adminSettings.settingKey, 'bot_task_cost_ton')).limit(1);
-        
-        const channelCostPerClick = parseFloat(channelTonCostSetting[0]?.settingValue || "0.0003");
-        const botCostPerClick = parseFloat(botTonCostSetting[0]?.settingValue || "0.0003");
-        
-        const costPerClick = taskType === "channel" ? channelCostPerClick : botCostPerClickTON;
-        const totalCost = costPerClick * totalClicksRequired;
-        
-        // Fetch  balance
-        const [userTonData] = await db
-          .select({ tonBalance: users.tonBalance })
-          .from(users)
-          .where(eq(users.id, userId));
-        
-        const currentTONBalance = parseFloat(userTonData?.tonBalance || '0');
-
-        console.log('💰 Payment check ():', { currentTONBalance, totalCostTON, sufficient: currentTONBalance >= totalCost });
-
-        if (currentTONBalance < totalCost) {
-          return res.status(400).json({
-            success: false,
-            message: `Insufficient . You need ${totalCost.toFixed(4)}  to create this task.`
-          });
-        }
-
-        // Deduct  balance
-        const newTONBalance = (currentTONBalance - totalCost).toFixed(10);
-        await db
-          .update(users)
-          .set({ tonBalance: newTONBalance, updatedAt: new Date() })
-          .where(eq(users.id, userId));
-
-        console.log('✅ Payment deducted ():', { oldBalance: currentTONBalance, newBalance: newTONBalance, deducted: totalCost });
-
-        await storage.logTransaction({
-          userId,
-          amount: totalCost.toFixed(10),
-          type: "deduction",
-          source: "task_creation",
-          description: `Created ${taskType} task: ${title}`,
-          metadata: { taskId: null, taskType, totalClicksRequired, paymentMethod: '' }
-        });
-
-        // Create task with  cost
-        const task = await storage.createTask({
-          advertiserId: userId,
-          taskType,
-          title,
-          link,
-          totalClicksRequired,
-          costPerClick: costPerClick.toFixed(10),
-          totalCost: totalCost.toFixed(10),
-          status: "under_review",
-        });
-
-        console.log('✅ Task saved to database:', task);
-
-        broadcastUpdate({
-          type: 'task:created',
-          task: task
-        });
-
-        // Send notification to admin about new task submission
-        try {
-          const adminNotification = `📝 <b>New Task Submitted</b>\n\nType: ${taskType}\nTitle: ${title}\nClicks: ${totalClicksRequired}\nCost: ${totalCost.toFixed(4)} TON\n\nPlease review.`;
-          await sendTelegramMessage(adminNotification);
-          console.log('📩 Admin notification sent for new task');
-        } catch (notifyError) {
-          console.error('Failed to send admin notification:', notifyError);
-        }
-
-        return res.json({ 
-          success: true, 
-          message: "Task created successfully",
-          task 
+        // Regular users: task creation is admin-only
+        return res.status(403).json({
+          success: false,
+          message: "Task creation is restricted to admins only."
         });
       }
     } catch (error) {
