@@ -70,7 +70,7 @@ export default function InvitePopup({ onClose }: InvitePopupProps) {
 
   const referrals = referralData?.referrals || [];
   const activeReferrals = referrals.filter((r) => r.isActive);
-  const totalBoost = activeReferrals.length * 0.02;
+  const totalBoost = activeReferrals.length * 0.01;
 
   const copyLink = () => {
     if (!referralLink) return;
@@ -104,7 +104,7 @@ export default function InvitePopup({ onClose }: InvitePopupProps) {
         transition={{ type: "spring", damping: 26, stiffness: 220 }}
       >
         {/* Header */}
-        <div className="px-5 py-4 border-b border-white/5 flex-shrink-0">
+        <div className="px-5 py-4 border-b border-white/5 flex-shrink-0 flex items-center justify-center">
           <h2 className="text-white font-black text-base uppercase tracking-tight italic">Invite Friends</h2>
         </div>
 
@@ -145,7 +145,7 @@ export default function InvitePopup({ onClose }: InvitePopupProps) {
               <div className="bg-[#141414] border border-white/5 rounded-2xl p-3.5 flex items-start gap-3">
                 <Sparkles className="w-4 h-4 text-[#F5C542] flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-white text-xs font-bold">You earn +{formatHashrate(0.02)} per friend</p>
+                  <p className="text-white text-xs font-bold">You earn +{formatHashrate(0.01)} per friend</p>
                   <p className="text-white/50 text-xs mt-0.5">More friends = faster mining speed.</p>
                 </div>
               </div>
@@ -230,7 +230,7 @@ export default function InvitePopup({ onClose }: InvitePopupProps) {
                         <p className="text-white/35 text-[10px] mt-0.5">ID: {r.refereeId}</p>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        {r.isActive && <p className="text-green-400 text-xs font-semibold">+{formatHashrate(0.02)}</p>}
+                        {r.isActive && <p className="text-green-400 text-xs font-semibold">+{formatHashrate(0.01)}</p>}
                       </div>
                     </div>
 

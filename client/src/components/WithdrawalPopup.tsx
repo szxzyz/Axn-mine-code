@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { showNotification } from "@/components/AppNotification";
-import { Loader2, Download } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,6 +32,11 @@ export default function WithdrawalPopup({ open, onOpenChange, tonBalance }: With
   const satBalance = Math.floor(parseFloat(user?.balance || "0"));
   const minWithdraw = appSettings?.minimum_withdrawal_sat ? parseFloat(appSettings.minimum_withdrawal_sat) : 20;
   const networkFee = appSettings?.withdrawal_fee_sat ? parseFloat(appSettings.withdrawal_fee_sat) : 10;
+  const withdrawAdsRequired = appSettings?.withdraw_ads_required === true || appSettings?.withdraw_ads_required === "true";
+  const adsWatchedToday: number = (user?.adsWatchedToday || 0) + (user?.adSection1Count || 0) + (user?.adSection2Count || 0);
+  const adsRequiredCount = 100;
+  const adsShortfall = Math.max(0, adsRequiredCount - adsWatchedToday);
+  const canWithdrawAds = !withdrawAdsRequired || adsWatchedToday >= adsRequiredCount;
 
   const withdrawMutation = useMutation({
     mutationFn: async () => {
@@ -70,6 +75,10 @@ export default function WithdrawalPopup({ open, onOpenChange, tonBalance }: With
   });
 
   const handleWithdrawClick = () => {
+    if (!canWithdrawAds) {
+      showNotification(`Watch ${adsShortfall} more ads to unlock withdrawal`, "error");
+      return;
+    }
     const amount = parseFloat(withdrawAmount);
     if (isNaN(amount) || amount < minWithdraw) {
       showNotification(`Minimum withdrawal amount is ${minWithdraw} SAT`, "error");
@@ -122,11 +131,8 @@ export default function WithdrawalPopup({ open, onOpenChange, tonBalance }: With
               <div className="w-10 h-1 rounded-full bg-white/20" />
             </div>
 
-            <div className="flex items-center px-5 py-3 border-b border-white/5">
-              <div className="flex items-center gap-2">
-                <Download className="w-5 h-5 text-yellow-400" />
-                <h2 className="text-white font-bold text-base">SAT Withdrawal</h2>
-              </div>
+            <div className="flex items-center justify-center px-5 py-3 border-b border-white/5">
+              <h2 className="text-white font-bold text-base">SAT Withdrawal</h2>
             </div>
 
             <div className="px-5 py-4 space-y-4">
@@ -211,10 +217,33 @@ export default function WithdrawalPopup({ open, onOpenChange, tonBalance }: With
                 </div>
               </div>
 
+              {withdrawAdsRequired && (
+                <div className={`rounded-xl p-4 space-y-2.5 border ${canWithdrawAds ? "bg-green-500/5 border-green-500/20" : "bg-yellow-500/5 border-yellow-500/20"}`}>
+                  <p className={`text-xs font-bold leading-relaxed ${canWithdrawAds ? "text-green-400" : "text-yellow-400"}`}>
+                    To keep this app free for all users, you need to watch ads before withdrawal.
+                  </p>
+                  <p className="text-white/50 text-xs leading-relaxed">
+                    You are required to complete {adsRequiredCount} ads to process your withdrawal. Your support helps us keep this project running long-term.
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/40 text-[11px] font-semibold">Ads Progress</span>
+                    <span className={`text-[11px] font-black tabular-nums ${canWithdrawAds ? "text-green-400" : "text-yellow-400"}`}>
+                      {Math.min(adsWatchedToday, adsRequiredCount)}/{adsRequiredCount}
+                    </span>
+                  </div>
+                  <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${canWithdrawAds ? "bg-green-400" : "bg-yellow-400"}`}
+                      style={{ width: `${Math.min(100, (adsWatchedToday / adsRequiredCount) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
               <Button
                 className="w-full h-11 bg-yellow-500 hover:bg-yellow-400 text-black rounded-xl font-black text-sm uppercase tracking-widest transition-all active:scale-[0.98] disabled:opacity-50 border-0"
                 onClick={handleWithdrawClick}
-                disabled={withdrawMutation.isPending}
+                disabled={withdrawMutation.isPending || !canWithdrawAds}
               >
                 {withdrawMutation.isPending ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

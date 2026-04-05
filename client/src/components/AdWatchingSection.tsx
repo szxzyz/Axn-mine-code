@@ -138,61 +138,62 @@ export default function AdWatchingSection({ user, section = 'section1' }: AdWatc
     sessionRewardedRef.current = false;
     
     try {
-      // STEP 1: Show Monetag ad - User must watch at least 3 seconds
-      setCurrentAdStep('monetag');
-      let monetagResult;
-      try {
-        monetagResult = await showMonetagAd();
-      } catch (e) {
-        console.error('Monetag fatal error:', e);
-        monetagResult = { success: false, watchedFully: false, unavailable: false };
-      }
-      
-      // Reset state immediately after ad closes to prevent black screen if something hangs
-      if (!monetagResult.success && !monetagResult.watchedFully) {
-        setCurrentAdStep('idle');
-        setIsShowingAds(false);
-      }
-
-      // Handle Monetag unavailable
-      if (monetagResult.unavailable) {
-        showNotification("Ads not available. Please try again later.", "error");
-        setIsShowingAds(false);
-        setCurrentAdStep('idle');
-        return;
-      }
-      
-      // Check if Monetag was closed before 3 seconds
-      if (!monetagResult.watchedFully) {
-        showNotification("Claimed too fast!", "error");
-        return;
-      }
-      
-      // Monetag was watched fully (at least 3 seconds)
-      if (!monetagResult.success) {
-        showNotification("Ad failed. Please try again.", "error");
-        return;
-      }
-      
-      // STEP 2: Show second ad based on section
-      setCurrentAdStep('adsgram');
-      try {
-        if (section === 'section1') {
-          await showAdsgramAd();
-        } else {
-          await showGigaPubAd();
+      if (section === 'section1') {
+        // LEFT SIDE: Monetag only
+        setCurrentAdStep('monetag');
+        let monetagResult;
+        try {
+          monetagResult = await showMonetagAd();
+        } catch (e) {
+          console.error('Monetag fatal error:', e);
+          monetagResult = { success: false, watchedFully: false, unavailable: false };
         }
-      } catch (e) {
-        console.error('Second ad error:', e);
+        
+        if (!monetagResult.success && !monetagResult.watchedFully) {
+          setCurrentAdStep('idle');
+          setIsShowingAds(false);
+        }
+
+        if (monetagResult.unavailable) {
+          showNotification("Ads not available. Please try again later.", "error");
+          setIsShowingAds(false);
+          setCurrentAdStep('idle');
+          return;
+        }
+        
+        if (!monetagResult.watchedFully) {
+          showNotification("Claimed too fast!", "error");
+          return;
+        }
+        
+        if (!monetagResult.success) {
+          showNotification("Ad failed. Please try again.", "error");
+          return;
+        }
+      } else {
+        // RIGHT SIDE: Adsgram only
+        setCurrentAdStep('adsgram');
+        let adsgramSuccess = false;
+        try {
+          adsgramSuccess = await showAdsgramAd();
+        } catch (e) {
+          console.error('Adsgram fatal error:', e);
+        }
+        
+        if (!adsgramSuccess) {
+          showNotification("Ad not available. Please try again later.", "error");
+          setCurrentAdStep('idle');
+          setIsShowingAds(false);
+          return;
+        }
       }
 
-      // STEP 3: Grant reward after both ads complete
+      // Grant reward after ad completes
       setCurrentAdStep('verifying');
       
       if (!sessionRewardedRef.current) {
         sessionRewardedRef.current = true;
         
-        // Optimistic UI update - only ONE increment to progress
         const rewardAmount = appSettings?.rewardPerAd || 2;
         queryClient.setQueryData(["/api/auth/user"], (old: any) => {
           if (!old) return old;
@@ -204,9 +205,8 @@ export default function AdWatchingSection({ user, section = 'section1' }: AdWatc
           };
         });
         
-        // Sync with backend - single reward call
         try {
-          await watchAdMutation.mutateAsync('monetag');
+          await watchAdMutation.mutateAsync(section === 'section1' ? 'monetag' : 'adsgram');
         } catch (e) {
           console.error('Reward mutation failed:', e);
         }
@@ -215,7 +215,6 @@ export default function AdWatchingSection({ user, section = 'section1' }: AdWatc
       console.error('handleStartEarning global error:', error);
       showNotification("An unexpected error occurred. Please try again.", "error");
     } finally {
-      // Always reset state on completion or error
       setCurrentAdStep('idle');
       setIsShowingAds(false);
     }

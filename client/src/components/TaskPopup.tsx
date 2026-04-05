@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Send, ExternalLink, CheckCircle, Loader2, Zap, LogIn, Share2,
-  Film, MonitorPlay, Tv, Play,
+  Film, MonitorPlay, Tv, Play, Globe, Target,
 } from "lucide-react";
 import { showNotification } from "@/components/AppNotification";
 import { motion, AnimatePresence } from "framer-motion";
@@ -36,12 +36,12 @@ interface DailyTaskDef {
 }
 
 const DAILY_TASKS: DailyTaskDef[] = [
-  { id: "login",  label: "Login",                icon: <LogIn className="w-5 h-5 text-[#F5C542]" />,      rewardPerHour: 0.001, isLogin: true },
-  { id: "share",  label: "Share App",             icon: <Share2 className="w-5 h-5 text-[#F5C542]" />,     rewardPerHour: 0.001, isShare: true },
-  { id: "ads15",  label: "Active 15 Ad Miner",    icon: <Play className="w-5 h-5 text-[#F5C542]" />,       rewardPerHour: 0.002, requiredAds: 15 },
-  { id: "ads25",  label: "Active 25 Ad Miner",    icon: <Film className="w-5 h-5 text-[#F5C542]" />,       rewardPerHour: 0.005, requiredAds: 25 },
-  { id: "ads60",  label: "Active 60 Ad Miner",    icon: <MonitorPlay className="w-5 h-5 text-[#F5C542]" />, rewardPerHour: 0.01, requiredAds: 60 },
-  { id: "ads120", label: "Active 120 Ad Miner",   icon: <Tv className="w-5 h-5 text-[#F5C542]" />,         rewardPerHour: 0.03, requiredAds: 120 },
+  { id: "login",  label: "Login",                icon: <Zap className="w-5 h-5 text-[#F5C542]" />,        rewardPerHour: 0.001, isLogin: true },
+  { id: "share",  label: "Share App",             icon: <Globe className="w-5 h-5 text-[#F5C542]" />,      rewardPerHour: 0.001, isShare: true },
+  { id: "ads15",  label: "Active 15 Ad Miner",    icon: <Zap className="w-5 h-5 text-[#F5C542]" />,        rewardPerHour: 0.002, requiredAds: 15 },
+  { id: "ads25",  label: "Active 25 Ad Miner",    icon: <Target className="w-5 h-5 text-[#F5C542]" />,     rewardPerHour: 0.005, requiredAds: 25 },
+  { id: "ads60",  label: "Active 60 Ad Miner",    icon: <Target className="w-5 h-5 text-[#F5C542]" />,     rewardPerHour: 0.01,  requiredAds: 60 },
+  { id: "ads120", label: "Active 120 Ad Miner",   icon: <Target className="w-5 h-5 text-[#F5C542]" />,     rewardPerHour: 0.03,  requiredAds: 120 },
 ];
 
 export default function TaskPopup({ onClose }: TaskPopupProps) {
@@ -225,7 +225,7 @@ export default function TaskPopup({ onClose }: TaskPopupProps) {
 
   const getPromotedIcon = (task: PromotedTask) => {
     if (task.taskType === "channel") return <Send className="w-5 h-5 text-[#F5C542]" />;
-    return <ExternalLink className="w-5 h-5 text-[#F5C542]" />;
+    return <Globe className="w-5 h-5 text-[#F5C542]" />;
   };
 
   const pendingPromoted = promotedTasks.filter((t) => !allCompletedPromoted.has(t.id));
@@ -245,12 +245,8 @@ export default function TaskPopup({ onClose }: TaskPopupProps) {
         transition={{ type: "spring", damping: 26, stiffness: 220 }}
       >
         {/* Header */}
-        <div className="px-5 py-4 border-b border-white/5 flex-shrink-0 flex items-center justify-between">
+        <div className="px-5 py-4 border-b border-white/5 flex-shrink-0 flex items-center justify-center relative">
           <h2 className="text-white font-black text-base uppercase tracking-tight italic">Tasks</h2>
-          <div className="flex items-center gap-1.5 bg-white/5 border border-white/8 rounded-xl px-3 py-1.5">
-            <Zap className="w-3 h-3 text-[#F5C542]" />
-            <span className="text-white/60 text-[10px] font-bold uppercase tracking-wide">Daily Resets</span>
-          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5">
@@ -280,11 +276,7 @@ export default function TaskPopup({ onClose }: TaskPopupProps) {
                       }`}
                     >
                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                          isClaimed
-                            ? "bg-green-500/10 border border-green-500/20"
-                            : "bg-[#F5C542]/10 border border-[#F5C542]/20"
-                        }`}>
+                        <div className="flex-shrink-0 w-8 flex items-center justify-center">
                           {isClaimed ? <CheckCircle className="w-5 h-5 text-green-400" /> : task.icon}
                         </div>
                         <div className="min-w-0">
@@ -369,7 +361,7 @@ export default function TaskPopup({ onClose }: TaskPopupProps) {
                           className="bg-[#141414] border border-white/5 rounded-2xl p-4 flex items-center justify-between gap-3"
                         >
                           <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <div className="w-10 h-10 rounded-xl bg-[#F5C542]/10 border border-[#F5C542]/20 flex items-center justify-center flex-shrink-0">
+                            <div className="flex-shrink-0 w-8 flex items-center justify-center">
                               {getPromotedIcon(task)}
                             </div>
                             <div className="min-w-0">
@@ -405,7 +397,7 @@ export default function TaskPopup({ onClose }: TaskPopupProps) {
                         className="bg-[#141414] border border-white/5 rounded-2xl p-4 flex items-center justify-between gap-3 opacity-50"
                       >
                         <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
+                          <div className="flex-shrink-0 w-8 flex items-center justify-center">
                             <CheckCircle className="w-5 h-5 text-green-400" />
                           </div>
                           <div className="min-w-0">
