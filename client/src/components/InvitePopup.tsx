@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { showNotification } from "@/components/AppNotification";
 import { motion, AnimatePresence } from "framer-motion";
+import { formatHashrate } from "@/lib/hashrate";
 
 interface ReferralItem {
   refereeId: string;
@@ -114,7 +115,7 @@ export default function InvitePopup({ onClose }: InvitePopupProps) {
               <Zap className="w-5 h-5 text-green-400 flex-shrink-0" />
               <div>
                 <p className="text-green-400 font-black text-sm">
-                  Active Boost: +{totalBoost.toFixed(2)}/h
+                  Active Boost: +{formatHashrate(totalBoost)}
                 </p>
                 <p className="text-white/50 text-xs">
                   {activeReferrals.length} active friend{activeReferrals.length !== 1 ? "s" : ""}
@@ -144,8 +145,8 @@ export default function InvitePopup({ onClose }: InvitePopupProps) {
               <div className="bg-[#141414] border border-white/5 rounded-2xl p-3.5 flex items-start gap-3">
                 <Sparkles className="w-4 h-4 text-[#F5C542] flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-white text-xs font-bold">You earn +0.02 SAT/h per friend</p>
-                  <p className="text-white/50 text-xs mt-0.5">More friends = faster mining, up to 100/h Sats.</p>
+                  <p className="text-white text-xs font-bold">You earn +{formatHashrate(0.02)} per friend</p>
+                  <p className="text-white/50 text-xs mt-0.5">More friends = faster mining speed.</p>
                 </div>
               </div>
             </div>
@@ -229,7 +230,7 @@ export default function InvitePopup({ onClose }: InvitePopupProps) {
                         <p className="text-white/35 text-[10px] mt-0.5">ID: {r.refereeId}</p>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        {r.isActive && <p className="text-green-400 text-xs font-semibold">+0.02/h</p>}
+                        {r.isActive && <p className="text-green-400 text-xs font-semibold">+{formatHashrate(0.02)}</p>}
                       </div>
                     </div>
 

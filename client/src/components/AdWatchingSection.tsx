@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Play, Clock, Shield, Zap, Loader2 } from "lucide-react";
 import { showNotification } from "@/components/AppNotification";
+import { formatHashrate } from "@/lib/hashrate";
 
 declare global {
   interface Window {
@@ -52,7 +53,7 @@ export default function AdWatchingSection({ user, section = 'section1' }: AdWatc
     },
     onSuccess: async (data) => {
       const rewardAmount = data?.rewardBoost || (section === 'section1' ? 0.0015 : 0.0001);
-      showNotification(`+${rewardAmount} Mining speed boost earned!`, "success");
+      showNotification(`+${formatHashrate(rewardAmount)} boost earned!`, "success");
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/mining/state"] });
     },
@@ -234,7 +235,7 @@ export default function AdWatchingSection({ user, section = 'section1' }: AdWatc
       <div className="absolute -inset-1 bg-gradient-to-r from-white/0 via-white/3 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
       <div className="flex-1 min-w-0 relative z-10 flex flex-col items-center text-center gap-1">
-        <span className="text-white text-[15px] font-black tabular-nums leading-none">+{sectionReward} SAT/h</span>
+        <span className="text-white text-[15px] font-black tabular-nums leading-none">+{formatHashrate(parseFloat(sectionReward))}</span>
         <span className="text-[#8E8E93] text-[10px] font-bold uppercase tracking-wider leading-none">24 hours of validity</span>
       </div>
 
