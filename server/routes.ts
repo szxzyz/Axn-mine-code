@@ -406,6 +406,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ad_section2_limit: settingsMap['ad_section2_limit'] || '250',
         ad_section1_reward: settingsMap['ad_section1_reward'] || '0.0015',
         ad_section2_reward: settingsMap['ad_section2_reward'] || '0.0001',
+        withdraw_ads_required: settingsMap['withdraw_ads_required'] === 'true',
+        referralBoostPerInvite: settingsMap['referral_boost_per_invite'] || '0.01',
       });
     } catch (error) {
       res.json({ 
@@ -1732,6 +1734,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         activePromoCode,
         // Withdrawal packages (JSON array of {ton, bug} objects)
         withdrawalPackages: JSON.parse(getSetting('withdrawal_packages', '[{"ton":0.2,"bug":2000},{"ton":0.4,"bug":4000},{"ton":0.8,"bug":8000}]')),
+        // SAT-specific settings
+        minimum_withdrawal_sat: parseFloat(getSetting('minimum_withdrawal_sat', '20')),
+        withdrawal_fee_sat: parseFloat(getSetting('withdrawal_fee_sat', '10')),
+        withdraw_ads_required: getSetting('withdraw_ads_required', 'false') === 'true',
       });
     } catch (error) {
       console.error("Error fetching app settings:", error);
@@ -3732,7 +3738,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ad_section1_reward: 'ad_section1_reward',
         ad_section1_limit: 'ad_section1_limit',
         ad_section2_reward: 'ad_section2_reward',
-        ad_section2_limit: 'ad_section2_limit'
+        ad_section2_limit: 'ad_section2_limit',
+        withdraw_ads_required: 'withdraw_ads_required'
       };
 
       for (const [feKey, dbKey] of Object.entries(settingMap)) {
@@ -3815,7 +3822,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ad_section1_reward: 'ad_section1_reward',
         ad_section1_limit: 'ad_section1_limit',
         ad_section2_reward: 'ad_section2_reward',
-        ad_section2_limit: 'ad_section2_limit'
+        ad_section2_limit: 'ad_section2_limit',
+        withdraw_ads_required: 'withdraw_ads_required'
       };
 
       for (const [feKey, dbKey] of Object.entries(settingMap)) {
