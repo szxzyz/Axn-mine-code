@@ -24,6 +24,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import WithdrawalPopup from "@/components/WithdrawalPopup";
 import MenuPopup from "@/components/MenuPopup";
 import TaskPopup from "@/components/TaskPopup";
+import { formatHashrate } from "@/lib/hashrate";
 
 
 // Unified Task Interface
@@ -94,6 +95,7 @@ export default function Home() {
 
   const [promoPopupOpen, setPromoPopupOpen] = useState(false);
   const [withdrawPopupOpen, setWithdrawPopupOpen] = useState(false);
+  const [miningPausedBanner, setMiningPausedBanner] = useState(false);
   const [convertPopupOpen, setConvertPopupOpen] = useState(false);
   const [boosterPopupOpen, setBoosterPopupOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -122,11 +124,26 @@ export default function Home() {
   const [checkForUpdatesCountdown, setCheckForUpdatesCountdown] = useState(3);
   const [hasClaimed, setHasClaimed] = useState(false);
   const [timeUntilNextClaim, setTimeUntilNextClaim] = useState<string>("");
+  const [isMiningPaused, setIsMiningPaused] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   
   const padBalance = parseFloat((user as User)?.balance || "0");
 
   const { runAdFlow } = useAdFlow();
+
+  useEffect(() => {
+    const PAUSE_THRESHOLD_MS = 72 * 60 * 60 * 1000;
+    const key = "last_app_open_ts";
+    const stored = localStorage.getItem(key);
+    if (stored) {
+      const diff = Date.now() - parseInt(stored, 10);
+      if (diff > PAUSE_THRESHOLD_MS) {
+        setMiningPausedBanner(true);
+        setTimeout(() => setMiningPausedBanner(false), 6000);
+      }
+    }
+    localStorage.setItem(key, String(Date.now()));
+  }, []);
 
   const { data: leaderboardData } = useQuery<{
     userEarnerRank?: { rank: number; totalEarnings: string } | null;
@@ -178,6 +195,22 @@ export default function Home() {
       setMiningAmount(parseFloat(miningStateData.currentMining));
     }
   }, [miningStateData.currentMining]);
+
+  // Mining Pause: check if user was inactive for 72+ hours
+  useEffect(() => {
+    try {
+      const SEVENTY_TWO_HOURS = 72 * 60 * 60 * 1000;
+      const lastActive = localStorage.getItem('mining_last_active');
+      if (lastActive) {
+        const elapsed = Date.now() - parseInt(lastActive, 10);
+        if (elapsed > SEVENTY_TWO_HOURS) {
+          setIsMiningPaused(true);
+          return;
+        }
+      }
+      localStorage.setItem('mining_last_active', String(Date.now()));
+    } catch {}
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -1145,6 +1178,31 @@ export default function Home() {
     );
   }
 
+  if (isMiningPaused) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-6">
+        <div className="text-center max-w-sm w-full">
+          <div className="w-20 h-20 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-6">
+            <span className="text-4xl">⛔</span>
+          </div>
+          <h2 className="text-white font-black text-2xl mb-2 uppercase tracking-tight">Mining Paused</h2>
+          <p className="text-white/40 text-sm mb-2">You were inactive for 3 days.</p>
+          <p className="text-white/30 text-xs mb-8">Login to resume mining.</p>
+          <button
+            onClick={() => {
+              try { localStorage.setItem('mining_last_active', String(Date.now())); } catch {}
+              setIsMiningPaused(false);
+            }}
+            className="w-full h-14 rounded-2xl font-black text-sm uppercase tracking-widest text-black transition-all active:scale-[0.98]"
+            style={{ background: 'linear-gradient(135deg, #F5C542 0%, #d4920a 100%)', boxShadow: '0 0 24px rgba(245,197,66,0.3)' }}
+          >
+            ▶ Resume Mining
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const userRank = leaderboardData?.userEarnerRank?.rank;
 
   // Values are now derived from miningState above
@@ -1160,6 +1218,31 @@ export default function Home() {
   return (
     <Layout>
       <Header ref={headerRef} />
+
+      {/* Mining Paused Banner */}
+      <AnimatePresence>
+        {miningPausedBanner && (
+          <motion.div
+            initial={{ opacity: 0, y: -60 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -60 }}
+            transition={{ type: "spring", damping: 22, stiffness: 200 }}
+            className="fixed top-16 left-0 right-0 z-[400] flex justify-center px-4"
+          >
+            <div className="w-full max-w-md bg-red-900/90 border border-red-500/40 rounded-2xl px-5 py-4 flex items-start gap-3 shadow-lg backdrop-blur-sm">
+              <span className="text-2xl leading-none">⛔</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-black text-sm">Mining Paused</p>
+                <p className="text-red-300 text-xs mt-0.5">You were inactive for 3 days. Mining has resumed now that you're back.</p>
+              </div>
+              <button onClick={() => setMiningPausedBanner(false)} className="text-red-400 hover:text-white transition-colors flex-shrink-0 mt-0.5">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <main className="max-w-md mx-auto px-4 pb-24" style={{ paddingTop: headerHeight + 8 }}>
         {/* Balance & Stats Section */}
         <div className="mb-4 relative">
@@ -1186,8 +1269,7 @@ export default function Home() {
                     >BTC</span>
                   </button>
                   <div className="flex items-center gap-1">
-                    <span className="text-white text-sm font-black tabular-nums">{miningRatePerHour.toFixed(4)}</span>
-                    <span className="text-[#8E8E93] text-[11px] font-bold">SAT/h</span>
+                    <span className="text-white text-sm font-black tabular-nums">{formatHashrate(miningRatePerHour)}</span>
                   </div>
                 </div>
                 
@@ -1197,16 +1279,6 @@ export default function Home() {
 
 
                 <div className="pt-4 border-t border-white/5">
-                  <div className="flex items-center justify-between mb-3 px-0.5">
-                    <span className="text-[#8E8E93] text-[9px] font-black uppercase tracking-widest">Total SAT Mined</span>
-                    <div className="flex items-center gap-1.5">
-                      <img src="/sat-icon.png" alt="SAT" className="w-3.5 h-3.5 rounded-full object-cover" />
-                      <span className="text-white text-sm font-black tabular-nums">
-                        {Math.floor(parseFloat(user?.balance || "0")).toLocaleString()}
-                      </span>
-                      <span className="text-[#F5C542] text-[10px] font-bold">SAT</span>
-                    </div>
-                  </div>
                   <button
                     onClick={handleClaimClick}
                     disabled={claimMiningMutation.isPending || !canClaimMining}
@@ -1242,17 +1314,28 @@ export default function Home() {
         <div className="mb-4">
           <button
             onClick={() => setTaskOpen(true)}
-            className="w-full bg-[#141414] border border-white/5 rounded-2xl p-4 flex items-center gap-4 active:scale-[0.98] transition-all"
+            className="w-full rounded-2xl active:scale-[0.97] transition-all duration-150 relative overflow-hidden"
+            style={{
+              background: 'linear-gradient(135deg, #F5C542 0%, #e6a800 40%, #c97f00 100%)',
+              boxShadow: '0 4px 24px rgba(245,197,66,0.45), 0 1px 0 rgba(255,255,255,0.15) inset',
+            }}
           >
-            <div className="w-11 h-11 rounded-xl bg-[#F5C542]/10 border border-[#F5C542]/20 flex items-center justify-center flex-shrink-0">
-              <Zap className="w-5 h-5 text-[#F5C542]" />
-            </div>
-            <div className="flex-1 text-left">
-              <p className="text-white font-black text-sm">Daily Tasks</p>
-              <p className="text-white/40 text-[11px] mt-0.5">Complete tasks to boost your mining rate</p>
-            </div>
-            <div className="text-white/20">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 18 6-6-6-6"/></svg>
+            {/* Shimmer sweep */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{ background: 'linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.18) 50%, transparent 65%)' }}
+            />
+            {/* Subtle dot pattern */}
+            <div
+              className="absolute inset-0 pointer-events-none opacity-10"
+              style={{ backgroundImage: 'radial-gradient(circle, #000 1px, transparent 1px)', backgroundSize: '14px 14px' }}
+            />
+
+            <div className="relative z-10 px-4 py-3.5">
+              <p className="text-black/60 font-black text-[9px] uppercase tracking-widest leading-none mb-0.5">Daily Tasks</p>
+              <p className="text-black font-black text-base leading-tight tracking-tight">
+                Earn up to <span className="text-lg">8.33 GH/s</span>
+              </p>
             </div>
           </button>
         </div>
