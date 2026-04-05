@@ -1248,7 +1248,10 @@ export default function Home() {
         <div className="mb-4 relative">
 
           <div className="w-full">
-              <div className="bg-[#141414] rounded-2xl p-4 border border-white/5 mb-4">
+              {/* MINING POWER — Title outside section */}
+              <p className="text-center text-[10px] font-black uppercase tracking-[0.15em] text-white/30 mb-2">Mining Power</p>
+
+              <div className="bg-[#141414] rounded-2xl p-4 border border-white/5 mb-6">
                 <div className="flex justify-between items-center mb-4">
                   <button
                     onClick={toggleBalanceFormat}
@@ -1272,12 +1275,10 @@ export default function Home() {
                     <span className="text-white text-sm font-black tabular-nums">{formatHashrate(miningRatePerHour)}</span>
                   </div>
                 </div>
-                
+
                 <div className="mb-1">
-                  <p className="text-center text-[10px] font-black uppercase tracking-[0.15em] text-white/30 mb-2">Mining Power</p>
                   <MatrixMiningCounter miningAmount={miningAmount} miningRate={miningRate} balanceFormat={balanceFormat} />
                 </div>
-
 
                 <div className="pt-4 border-t border-white/5">
                   <button
@@ -1303,8 +1304,10 @@ export default function Home() {
                 </div>
               </div>
 
-              <div>
-                <p className="text-center text-[10px] font-black uppercase tracking-[0.12em] text-white/30 mb-2">Watch ads to boost your mining power</p>
+              {/* WATCH ADS TO BOOST MINING — Title outside section */}
+              <p className="text-center text-[10px] font-black uppercase tracking-[0.12em] text-white/30 mb-2">Watch Ads to Boost Mining</p>
+
+              <div className="mb-6">
                 <div className="grid grid-cols-2 gap-3">
                   <AdWatchingSection user={user as User} section="section1" />
                   <AdWatchingSection user={user as User} section="section2" />
@@ -1314,9 +1317,9 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Tasks Entry Card */}
+        {/* COMPLETE TASKS TO EARN MORE — Title outside section */}
         <div className="mb-4">
-          <p className="text-center text-[10px] font-black uppercase tracking-[0.12em] text-white/30 mb-2">Complete tasks to earn more rewards</p>
+          <p className="text-center text-[10px] font-black uppercase tracking-[0.12em] text-white/30 mb-2">Complete Tasks to Earn More</p>
           <button
             onClick={() => setTaskOpen(true)}
             className="w-full bg-[#141414] border border-white/5 rounded-2xl p-4 flex items-center gap-4 shadow-[0_4px_20px_rgba(0,0,0,0.4)] active:scale-[0.98] transition-all duration-150 relative overflow-hidden group"
@@ -1343,6 +1346,11 @@ export default function Home() {
               </div>
             </div>
           </button>
+        </div>
+
+        {/* Footer */}
+        <div id="footer01" className="mt-6 mb-2 text-center">
+          <p className="text-[10px] text-white/20 font-medium">© 2026 LightningSatsbot</p>
         </div>
 
       </main>
