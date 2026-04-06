@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { Send, Users, Check, Loader2, ArrowRight } from "lucide-react";
 
 interface MembershipStatus {
   channelMember: boolean;
@@ -24,26 +25,26 @@ export default function ChannelJoinPopup({ telegramId, onVerified }: ChannelJoin
 
   const checkMembership = async (isInitialCheck = false) => {
     if (isChecking) return;
-    
+
     setIsChecking(true);
     setError(null);
-    
+
     try {
       const headers: Record<string, string> = {};
       const tg = window.Telegram?.WebApp;
       if (tg?.initData) {
         headers['x-telegram-data'] = tg.initData;
       }
-      
+
       const response = await fetch(`/api/check-membership?t=${Date.now()}`, { headers });
       const data = await response.json();
-      
+
       if (data.success && data.isVerified) {
         onVerified();
         queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
         return;
       }
-      
+
       if (data.success) {
         setMembershipStatus({
           channelMember: data.channelMember || false,
@@ -53,14 +54,14 @@ export default function ChannelJoinPopup({ telegramId, onVerified }: ChannelJoin
           channelName: data.channelName || "Channel",
           groupName: data.groupName || "Group",
         });
-        
+
         if (!isInitialCheck) {
           if (!data.channelMember && !data.groupMember) {
-            setError("Please join both the channel and the group first!");
+            setError("Please join both the channel and the group first.");
           } else if (!data.channelMember) {
-            setError("Please join the channel first!");
+            setError("Please join the channel first.");
           } else if (!data.groupMember) {
-            setError("Please join the group first!");
+            setError("Please join the group first.");
           }
         }
       } else if (!isInitialCheck) {
@@ -91,121 +92,126 @@ export default function ChannelJoinPopup({ telegramId, onVerified }: ChannelJoin
     }
   };
 
-  const handleContinue = () => {
-    checkMembership(false);
-  };
-
   const allJoined = membershipStatus?.channelMember && membershipStatus?.groupMember;
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-md flex items-center justify-center p-5">
+    <div className="fixed inset-0 z-[9999] bg-[#0a0a0a] flex items-center justify-center p-5">
       <div className="w-full max-w-sm">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 mx-auto mb-4 rounded-2xl overflow-hidden">
-            <img src="/btc-icon.jpg" alt="Bitcoin" className="w-full h-full object-cover" />
-          </div>
-          <h1 className="text-white font-bold text-xl tracking-tight mb-1">Join to Continue</h1>
-          <p className="text-white/40 text-sm">Join our channel and group to access the app</p>
+
+        {/* Icon */}
+        <div className="w-14 h-14 rounded-2xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center mx-auto mb-5">
+          <img
+            src="/btc-icon.jpg"
+            alt="Bitcoin"
+            className="w-9 h-9 rounded-xl object-cover"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
         </div>
 
+        <h1 className="text-white font-black text-xl text-center mb-2 tracking-tight">
+          Join to Continue
+        </h1>
+        <p className="text-white/40 text-sm text-center mb-7 leading-relaxed">
+          Join our channel and group to access the app and start earning
+        </p>
+
         {error && (
-          <div className="mb-4 py-2.5 px-3.5 bg-red-500/10 border border-red-500/20 rounded-xl">
-            <p className="text-red-400 text-xs text-center">{error}</p>
+          <div className="mb-4 py-2.5 px-4 bg-red-500/10 border border-red-500/20 rounded-2xl">
+            <p className="text-red-400 text-xs text-center font-semibold">{error}</p>
           </div>
         )}
 
-        <div className="space-y-2.5 mb-6">
-          {/* Channel Join Button */}
+        <div className="space-y-2.5 mb-5">
+          {/* Channel */}
           <button
             onClick={() => openLink(membershipStatus?.channelUrl || "https://t.me/LightningSatoshi")}
-            className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${
+            className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-all active:scale-[0.98] ${
               membershipStatus?.channelMember
-                ? "bg-[#F5C542]/10 border-[#F5C542]/30"
-                : "bg-white/5 border-white/8 hover:border-white/20 active:scale-[0.98]"
+                ? "bg-green-500/5 border-green-500/20"
+                : "bg-[#141414] border-white/8 hover:border-white/15"
             }`}
           >
-            <div className="flex items-center gap-3.5">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                membershipStatus?.channelMember ? "bg-[#F5C542]/15" : "bg-white/8"
-              }`}>
-                <svg className={`w-5 h-5 ${membershipStatus?.channelMember ? "text-[#F5C542]" : "text-white/60"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-                </svg>
-              </div>
-              <div className="text-left">
-                <p className={`font-semibold text-sm ${membershipStatus?.channelMember ? "text-white" : "text-white/80"}`}>
-                  Join Channel
-                </p>
-                <p className="text-white/30 text-[10px] mt-0.5">Required to access the app</p>
-              </div>
+            <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${
+              membershipStatus?.channelMember
+                ? "bg-green-500/15 border border-green-500/20"
+                : "bg-white/5 border border-white/8"
+            }`}>
+              <Send className={`w-5 h-5 ${membershipStatus?.channelMember ? "text-green-400" : "text-white/50"}`} strokeWidth={1.5} />
             </div>
-            {membershipStatus?.channelMember ? (
-              <div className="w-6 h-6 rounded-full bg-[#F5C542]/20 flex items-center justify-center">
-                <svg className="w-3.5 h-3.5 text-[#F5C542]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-            ) : (
-              <span className="text-[#F5C542] text-[10px] font-black tracking-widest uppercase bg-[#F5C542]/10 px-2.5 py-1 rounded-lg">JOIN</span>
-            )}
+            <div className="flex-1 text-left">
+              <p className="text-white font-bold text-sm">Main Channel</p>
+              <p className="text-white/35 text-[11px] mt-0.5">News & announcements</p>
+            </div>
+            <div className="flex-shrink-0">
+              {membershipStatus?.channelMember ? (
+                <div className="w-7 h-7 rounded-full bg-green-500/20 flex items-center justify-center">
+                  <Check className="w-3.5 h-3.5 text-green-400" strokeWidth={2.5} />
+                </div>
+              ) : (
+                <span className="text-yellow-400 text-[11px] font-black tracking-widest uppercase bg-yellow-500/10 border border-yellow-500/20 px-3 py-1.5 rounded-xl">
+                  JOIN
+                </span>
+              )}
+            </div>
           </button>
 
-          {/* Group Join Button */}
+          {/* Group */}
           <button
             onClick={() => openLink(membershipStatus?.groupUrl || "https://t.me/LightningSatoshiCommunity")}
-            className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${
+            className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-all active:scale-[0.98] ${
               membershipStatus?.groupMember
-                ? "bg-[#F5C542]/10 border-[#F5C542]/30"
-                : "bg-white/5 border-white/8 hover:border-white/20 active:scale-[0.98]"
+                ? "bg-green-500/5 border-green-500/20"
+                : "bg-[#141414] border-white/8 hover:border-white/15"
             }`}
           >
-            <div className="flex items-center gap-3.5">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                membershipStatus?.groupMember ? "bg-[#F5C542]/15" : "bg-white/8"
-              }`}>
-                <svg className={`w-5 h-5 ${membershipStatus?.groupMember ? "text-[#F5C542]" : "text-white/60"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </div>
-              <div className="text-left">
-                <p className={`font-semibold text-sm ${membershipStatus?.groupMember ? "text-white" : "text-white/80"}`}>
-                  Join Group
-                </p>
-                <p className="text-white/30 text-[10px] mt-0.5">Required to access the app</p>
-              </div>
+            <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${
+              membershipStatus?.groupMember
+                ? "bg-green-500/15 border border-green-500/20"
+                : "bg-white/5 border border-white/8"
+            }`}>
+              <Users className={`w-5 h-5 ${membershipStatus?.groupMember ? "text-green-400" : "text-white/50"}`} strokeWidth={1.5} />
             </div>
-            {membershipStatus?.groupMember ? (
-              <div className="w-6 h-6 rounded-full bg-[#F5C542]/20 flex items-center justify-center">
-                <svg className="w-3.5 h-3.5 text-[#F5C542]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-            ) : (
-              <span className="text-[#F5C542] text-[10px] font-black tracking-widest uppercase bg-[#F5C542]/10 px-2.5 py-1 rounded-lg">JOIN</span>
-            )}
+            <div className="flex-1 text-left">
+              <p className="text-white font-bold text-sm">Community Group</p>
+              <p className="text-white/35 text-[11px] mt-0.5">Chat with miners</p>
+            </div>
+            <div className="flex-shrink-0">
+              {membershipStatus?.groupMember ? (
+                <div className="w-7 h-7 rounded-full bg-green-500/20 flex items-center justify-center">
+                  <Check className="w-3.5 h-3.5 text-green-400" strokeWidth={2.5} />
+                </div>
+              ) : (
+                <span className="text-yellow-400 text-[11px] font-black tracking-widest uppercase bg-yellow-500/10 border border-yellow-500/20 px-3 py-1.5 rounded-xl">
+                  JOIN
+                </span>
+              )}
+            </div>
           </button>
         </div>
 
         <button
-          onClick={handleContinue}
+          onClick={() => checkMembership(false)}
           disabled={isChecking}
-          className="w-full py-3.5 px-4 bg-[#F5C542] text-black font-black rounded-2xl transition-all hover:bg-[#F5C542]/90 disabled:opacity-50 disabled:cursor-not-allowed text-sm uppercase tracking-widest active:scale-[0.98]"
+          className="w-full h-12 rounded-2xl font-black text-sm uppercase tracking-widest transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+          style={{
+            background: allJoined
+              ? 'linear-gradient(135deg, #F5C542 0%, #d4920a 100%)'
+              : 'rgba(255,255,255,0.07)',
+            color: allJoined ? '#000' : 'rgba(255,255,255,0.5)',
+            border: allJoined ? 'none' : '1px solid rgba(255,255,255,0.08)',
+          }}
         >
           {isChecking ? (
-            <span className="flex items-center justify-center gap-2">
-              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Checking...
-            </span>
+            <Loader2 className="w-4 h-4 animate-spin" />
           ) : allJoined ? (
-            "Continue"
+            <>Continue <ArrowRight className="w-4 h-4" /></>
           ) : (
-            "I've Joined"
+            "I've Joined — Verify"
           )}
         </button>
+
       </div>
     </div>
   );

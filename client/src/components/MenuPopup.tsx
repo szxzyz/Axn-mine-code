@@ -5,7 +5,7 @@ import {
   Shield, Users, Wifi, CalendarDays, Trophy, Receipt, Zap,
   ChevronRight, ArrowLeft, CheckCircle, XCircle, Clock, Loader2,
   Youtube, Instagram, Video, CheckSquare, Square, Plus, ScrollText, AlertCircle,
-  TrendingUp, Activity, RefreshCw, Star,
+  TrendingUp, Activity, RefreshCw, Star, Sparkles, FileText, Lock, Info,
 } from "lucide-react";
 import { RiBarChartFill } from "react-icons/ri";
 import { FaReceipt, FaBalanceScale, FaCrown } from "react-icons/fa";
@@ -251,23 +251,28 @@ export default function MenuPopup({ onClose }: MenuPopupProps) {
         {overlay === "transactions" && (
           <motion.div className="fixed inset-0 bg-[#0a0a0a] z-[300] flex flex-col" {...slideIn}>
             <OverlayHeader title="Transactions" />
-            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
+            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2.5">
               {txLoading ? (
                 <div className="flex justify-center py-12"><Loader2 className="w-5 h-5 text-white/30 animate-spin" /></div>
               ) : withdrawals.length === 0 ? (
-                <div className="text-center py-12 text-white/30 text-sm font-bold uppercase tracking-widest">No transactions yet</div>
+                <div className="flex flex-col items-center py-16 gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center">
+                    <Receipt className="w-5 h-5 text-white/20" strokeWidth={1.5} />
+                  </div>
+                  <p className="text-white/25 text-xs font-bold uppercase tracking-widest">No transactions yet</p>
+                </div>
               ) : (
                 withdrawals.map((w: any) => (
-                  <div key={w.id} className="bg-[#141414] border border-white/5 rounded-2xl p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                  <div key={w.id} className="bg-[#141414] border border-white/5 rounded-2xl p-4 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0">
                       {getStatusIcon(w.status)}
-                      <div>
-                        <p className="text-white text-xs font-black uppercase tracking-tight">{w.method || "Withdrawal"}</p>
-                        <p className="text-white/40 text-[10px] mt-0.5">{w.createdAt ? format(new Date(w.createdAt), "dd MMM yyyy") : "—"}</p>
-                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-white text-sm font-black">{parseFloat(w.amount || "0").toLocaleString()} SAT</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white text-xs font-black uppercase tracking-tight">{w.method || "Withdrawal"}</p>
+                      <p className="text-white/35 text-[10px] mt-0.5">{w.createdAt ? format(new Date(w.createdAt), "dd MMM yyyy") : "—"}</p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-white text-sm font-black tabular-nums">{parseFloat(w.amount || "0").toLocaleString()} SAT</p>
                       <p className={`text-[10px] font-bold capitalize mt-0.5 ${getStatusColor(w.status)}`}>{w.status}</p>
                     </div>
                   </div>
@@ -283,19 +288,41 @@ export default function MenuPopup({ onClose }: MenuPopupProps) {
       <AnimatePresence>
         {overlay === "legal" && (
           <motion.div className="fixed inset-0 bg-[#0a0a0a] z-[300] flex flex-col" {...slideIn}>
-            <OverlayHeader title="Legal Info" />
+            <OverlayHeader title="Legal Info & Terms" />
             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 text-xs text-white/50 leading-relaxed">
               <div className="bg-[#141414] border border-white/5 rounded-2xl p-4">
-                <p className="text-white font-black text-sm mb-2 flex items-center gap-2"><ScrollText className="w-4 h-4 text-orange-400" /> Terms of Use</p>
-                <p>By using this app, you agree to our terms. Rewards are in SAT (satoshis) and are subject to availability. Rewards may change at any time without prior notice.</p>
+                <p className="text-white font-black text-sm mb-3 flex items-center gap-2"><FileText className="w-4 h-4 text-orange-400" strokeWidth={1.5} /> Terms of Use</p>
+                <div className="space-y-2">
+                  <p>By accessing or using Lightning Satoshi, you agree to be bound by these Terms of Use. If you do not agree, please discontinue use immediately.</p>
+                  <p>All rewards are denominated in SAT (satoshis). Reward rates, withdrawal minimums, and earning limits are subject to change at any time. Continued use of the app constitutes acceptance of any modifications.</p>
+                  <p>Users must complete all verification steps honestly. Any attempt to manipulate rewards, exploit system bugs, or bypass restrictions will result in immediate account suspension without appeal.</p>
+                  <p>Withdrawals are processed via the Lightning Network and are irreversible once submitted. Ensure your withdrawal address is correct before confirming.</p>
+                </div>
               </div>
               <div className="bg-[#141414] border border-white/5 rounded-2xl p-4">
-                <p className="text-white font-black text-sm mb-2 flex items-center gap-2"><Shield className="w-4 h-4 text-purple-400" /> Privacy Policy</p>
-                <p>We collect only your Telegram user data (name, username, ID) to identify your account. We do not share your data with third parties. Your data is securely stored and used solely to operate the app.</p>
+                <p className="text-white font-black text-sm mb-3 flex items-center gap-2"><Lock className="w-4 h-4 text-purple-400" strokeWidth={1.5} /> Privacy Policy</p>
+                <div className="space-y-2">
+                  <p>We collect only the minimum data necessary to operate this service: your Telegram user ID, username, and first name. This data is used solely for account identification and reward delivery.</p>
+                  <p>We do not sell, rent, or share your personal data with third parties for marketing purposes. Data may be shared with payment processors solely to facilitate withdrawals.</p>
+                  <p>All data is stored securely with industry-standard encryption. You may request deletion of your account and associated data at any time by contacting our support team.</p>
+                  <p>By using this app, you consent to the collection and use of your data as described in this policy.</p>
+                </div>
               </div>
               <div className="bg-[#141414] border border-white/5 rounded-2xl p-4">
-                <p className="text-white font-black text-sm mb-2 flex items-center gap-2"><AlertCircle className="w-4 h-4 text-red-400" /> Disclaimer</p>
-                <p>This app is not affiliated with Telegram. Withdrawals are subject to minimum balance requirements and admin review.</p>
+                <p className="text-white font-black text-sm mb-3 flex items-center gap-2"><Shield className="w-4 h-4 text-blue-400" strokeWidth={1.5} /> User Conduct</p>
+                <div className="space-y-2">
+                  <p>Each user is permitted one account only. Multiple accounts used by the same individual will be detected and banned without prior warning.</p>
+                  <p>Self-referrals and artificial inflation of referral counts are strictly prohibited. Violations are reviewed automatically and may result in permanent suspension.</p>
+                  <p>Users must be 18 years of age or older to participate. By using this app you confirm you meet this requirement.</p>
+                </div>
+              </div>
+              <div className="bg-[#141414] border border-white/5 rounded-2xl p-4">
+                <p className="text-white font-black text-sm mb-3 flex items-center gap-2"><Info className="w-4 h-4 text-red-400" strokeWidth={1.5} /> Disclaimer</p>
+                <div className="space-y-2">
+                  <p>Lightning Satoshi is an independent application and is not affiliated with, endorsed by, or sponsored by Telegram Messenger Inc. or the Bitcoin Foundation.</p>
+                  <p>Earnings are not guaranteed. Rewards depend on ad availability, user activity, and platform policies which may change without notice.</p>
+                  <p>This app does not constitute financial advice. SAT rewards have real-world value and may fluctuate. We are not responsible for any financial decisions made based on this platform.</p>
+                </div>
               </div>
             </div>
             <OverlayFooter onClose={() => setOverlay(null)} />

@@ -2,11 +2,12 @@ import { useState, useCallback } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { showNotification } from "@/components/AppNotification";
-import { Loader2 } from "lucide-react";
+import { Loader2, MonitorPlay } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLocation } from "wouter";
 
 interface WithdrawalPopupProps {
   open: boolean;
@@ -16,6 +17,7 @@ interface WithdrawalPopupProps {
 
 export default function WithdrawalPopup({ open, onOpenChange, tonBalance }: WithdrawalPopupProps) {
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   const [withdrawAddress, setWithdrawAddress] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [showAdPopup, setShowAdPopup] = useState(false);
@@ -252,35 +254,32 @@ export default function WithdrawalPopup({ open, onOpenChange, tonBalance }: With
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <div
-              className="absolute inset-0 bg-black/75 backdrop-blur-sm"
-              onClick={() => setShowAdPopup(false)}
-            />
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
             <motion.div
-              className="relative w-full max-w-sm bg-[#0f0f0f] border border-white/10 rounded-2xl overflow-hidden"
-              initial={{ scale: 0.92, opacity: 0 }}
+              className="relative w-full max-w-xs bg-[#0f0f0f] border border-white/10 rounded-2xl overflow-hidden"
+              initial={{ scale: 0.94, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.92, opacity: 0 }}
+              exit={{ scale: 0.94, opacity: 0 }}
               transition={{ type: "spring", damping: 26, stiffness: 300 }}
             >
-              <div className="px-6 py-6 text-center">
-                <div className="w-14 h-14 rounded-2xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl">📺</span>
+              <div className="px-5 py-5">
+                <div className="w-11 h-11 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center mx-auto mb-3">
+                  <MonitorPlay className="w-5 h-5 text-yellow-400" strokeWidth={1.5} />
                 </div>
-                <h2 className="text-white font-black text-base uppercase tracking-wide mb-3">Ads Required</h2>
-                <p className="text-white/55 text-sm leading-relaxed mb-2">
-                  To keep this app free for all users, you need to watch ads before withdrawal.
+                <h2 className="text-white font-black text-sm text-center tracking-wide mb-3">Ad Requirement</h2>
+                <p className="text-white/55 text-xs leading-relaxed text-center mb-1.5">
+                  To keep this app free for all users, ad support is required before withdrawal.
                 </p>
-                <p className="text-white/40 text-sm leading-relaxed mb-4">
-                  You must complete <span className="text-yellow-400 font-black">100 ads</span> to proceed.
+                <p className="text-white/40 text-xs leading-relaxed text-center mb-1.5">
+                  Please complete <span className="text-yellow-400 font-black">100 ads</span> to continue.
                 </p>
-                <p className="text-white/30 text-xs leading-relaxed mb-5">
-                  Your support helps us keep this project running long-term.
+                <p className="text-white/30 text-[11px] leading-relaxed text-center mb-4">
+                  Your support helps us keep this service running long-term.
                 </p>
-                <div className="mb-5">
-                  <div className="flex items-center justify-between mb-2">
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-1.5">
                     <span className="text-white/35 text-[10px] font-semibold uppercase tracking-wide">Progress</span>
-                    <span className="text-yellow-400 text-xs font-black tabular-nums">
+                    <span className="text-yellow-400 text-[10px] font-black tabular-nums">
                       {Math.min(adsWatchedToday, adsRequiredCount)}/{adsRequiredCount}
                     </span>
                   </div>
@@ -292,8 +291,12 @@ export default function WithdrawalPopup({ open, onOpenChange, tonBalance }: With
                   </div>
                 </div>
                 <button
-                  onClick={() => setShowAdPopup(false)}
-                  className="w-full h-11 bg-white/6 border border-white/10 text-white/60 rounded-xl font-black text-sm uppercase tracking-widest transition-all active:scale-[0.98] hover:text-white/80"
+                  onClick={() => {
+                    setShowAdPopup(false);
+                    onOpenChange(false);
+                    setLocation("/");
+                  }}
+                  className="w-full h-10 bg-white/6 border border-white/10 text-white/60 rounded-xl font-black text-xs uppercase tracking-widest transition-all active:scale-[0.98] hover:text-white/80"
                 >
                   Close
                 </button>
