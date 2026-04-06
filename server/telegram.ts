@@ -685,27 +685,35 @@ export async function formatWelcomeMessage(): Promise<{ message: string; inlineK
   const channelUrl = 'https://t.me/LightningSatoshi';
   const groupUrl = 'https://t.me/LightningSatCommunity';
   
-  const message = `🚀 It's Time to Start Mining Sats\n\n` +
-                 `The journey has begun.\n` +
-                 `Who knows how many Satoshis you'll earn, how fast your balance will grow, or who you'll invite along the way?\n\n` +
-                 `One thing is certain: the earning journey has started.\n\n` +
-                 `⚡ Mine daily to boost your earnings\n` +
-                 `👥 Invite friends and earn together\n` +
-                 `💰 Collect Sats and withdraw anytime\n\n` +
-                 `Join now and don't miss your chance to start stacking Satoshi.`;
+  const message = `<b>Start mining Bitcoin on Telegram</b>\n\n` +
+                 `No complicated steps — just quick actions and real rewards. Complete simple tasks and watch your Sats grow. Within minutes, you can earn and withdraw directly to your wallet.`;
 
   const inlineKeyboard = {
     inline_keyboard: [
       [
         {
-          text: "🚀 Let's Go",
+          text: "⛏️ Start mining",
           url: `https://t.me/${botUsername}/MyWAdz`
         }
       ],
       [
         {
-          text: "📢 Channel",
-          url: channelUrl
+          text: "⁉️ FAQ",
+          url: "https://t.me/LightningSatoshiCommunity/4693"
+        },
+        {
+          text: "💸 Miner payout log",
+          url: "https://t.me/LightningSatoshiCommunity/1"
+        }
+      ],
+      [
+        {
+          text: "🇬🇧 ENG Chat",
+          url: "https://t.me/LightningSatoshiCommunity/4680"
+        },
+        {
+          text: "🇷🇺 RUS Chat",
+          url: "https://t.me/LightningSatoshiCommunity/4695"
         }
       ]
     ]
