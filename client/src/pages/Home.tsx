@@ -132,7 +132,7 @@ export default function Home() {
   const { runAdFlow } = useAdFlow();
 
   useEffect(() => {
-    const PAUSE_THRESHOLD_MS = 72 * 60 * 60 * 1000;
+    const PAUSE_THRESHOLD_MS = 48 * 60 * 60 * 1000;
     const key = "last_app_open_ts";
     const stored = localStorage.getItem(key);
     if (stored) {
@@ -177,10 +177,11 @@ export default function Home() {
     retry: false,
   });
 
-  const { data: miningState, isLoading: isLoadingMining } = useQuery<any>({
+  const { data: miningState, isLoading: isLoadingMining, refetch: refetchMiningState } = useQuery<any>({
     queryKey: ['/api/mining/state'],
     retry: false,
     staleTime: 10000,
+    refetchInterval: 30000,
   });
 
   const miningStateData = miningState || {};
@@ -196,14 +197,14 @@ export default function Home() {
     }
   }, [miningStateData.currentMining]);
 
-  // Mining Pause: check if user was inactive for 72+ hours
+  // Mining Pause: check if user was inactive for 48+ hours
   useEffect(() => {
     try {
-      const SEVENTY_TWO_HOURS = 72 * 60 * 60 * 1000;
+      const FORTY_EIGHT_HOURS = 48 * 60 * 60 * 1000;
       const lastActive = localStorage.getItem('mining_last_active');
       if (lastActive) {
         const elapsed = Date.now() - parseInt(lastActive, 10);
-        if (elapsed > SEVENTY_TWO_HOURS) {
+        if (elapsed > FORTY_EIGHT_HOURS) {
           setIsMiningPaused(true);
           return;
         }
@@ -213,11 +214,12 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    if (isMiningPaused) return;
     const interval = setInterval(() => {
       setMiningAmount(prev => prev + miningRate);
     }, 1000);
     return () => clearInterval(interval);
-  }, [miningRate]);
+  }, [miningRate, isMiningPaused]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -248,6 +250,8 @@ export default function Home() {
 
   const claimMiningMutation = useMutation({
     mutationFn: async () => {
+      // Sync with server first to get accurate amount
+      await refetchMiningState();
       const response = await apiRequest("POST", "/api/mining/claim");
       if (!response.ok) {
         const error = await response.json();
@@ -258,7 +262,8 @@ export default function Home() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/mining/state"] });
-      showNotification(`+${Math.floor(parseFloat(data.amount)).toLocaleString()} SAT claimed from mining!`, "success");
+      const claimed = Math.floor(parseFloat(data.amount || "0"));
+      showNotification(`+${claimed.toLocaleString()} SAT claimed from mining!`, "success");
     },
     onError: (error: any) => {
       showNotification(error.message, "error");
@@ -1186,8 +1191,8 @@ export default function Home() {
             <span className="text-4xl">⛔</span>
           </div>
           <h2 className="text-white font-black text-2xl mb-2 uppercase tracking-tight">Mining Paused</h2>
-          <p className="text-white/40 text-sm mb-2">You were inactive for 3 days.</p>
-          <p className="text-white/30 text-xs mb-8">Login to resume mining.</p>
+          <p className="text-white/40 text-sm mb-2">You were inactive for 48 hours.</p>
+          <p className="text-white/30 text-xs mb-8">Open the app to resume mining.</p>
           <button
             onClick={() => {
               try { localStorage.setItem('mining_last_active', String(Date.now())); } catch {}
@@ -1233,7 +1238,7 @@ export default function Home() {
               <span className="text-2xl leading-none">⛔</span>
               <div className="flex-1 min-w-0">
                 <p className="text-white font-black text-sm">Mining Paused</p>
-                <p className="text-red-300 text-xs mt-0.5">You were inactive for 3 days. Mining has resumed now that you're back.</p>
+                <p className="text-red-300 text-xs mt-0.5">You were inactive for 2 days. Mining has resumed now that you're back.</p>
               </div>
               <button onClick={() => setMiningPausedBanner(false)} className="text-red-400 hover:text-white transition-colors flex-shrink-0 mt-0.5">
                 <X className="w-4 h-4" />
@@ -1251,7 +1256,7 @@ export default function Home() {
               {/* MINING POWER — Title outside section */}
               <p className="text-center text-[10px] font-black uppercase tracking-[0.15em] text-white/30 mb-2">Mining Power</p>
 
-              <div className="bg-[#141414] rounded-2xl p-4 border border-white/5 mb-6">
+              <div className="bg-[#111] rounded-2xl p-4 border border-[#2a2a2a] mb-6">
                 <div className="flex justify-between items-center mb-4">
                   <button
                     onClick={toggleBalanceFormat}
@@ -1322,7 +1327,7 @@ export default function Home() {
           <p className="text-center text-[10px] font-black uppercase tracking-[0.12em] text-white/30 mb-2">Complete Tasks to Earn More</p>
           <button
             onClick={() => setTaskOpen(true)}
-            className="w-full bg-[#141414] border border-white/5 rounded-2xl p-4 flex items-center gap-4 shadow-[0_4px_20px_rgba(0,0,0,0.4)] active:scale-[0.98] transition-all duration-150 relative overflow-hidden group"
+            className="w-full bg-[#111] border border-[#2a2a2a] rounded-2xl p-4 flex items-center gap-4 shadow-[0_4px_20px_rgba(0,0,0,0.4)] active:scale-[0.98] transition-all duration-150 relative overflow-hidden group"
           >
             <div className="absolute -inset-1 bg-gradient-to-r from-white/0 via-white/3 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
