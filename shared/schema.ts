@@ -58,6 +58,8 @@ export const users = pgTable("users", {
   banned: boolean("banned").default(false),
   bannedReason: text("banned_reason"),
   bannedAt: timestamp("banned_at"),
+  banType: varchar("ban_type", { length: 20 }).default("system"),
+  adminBanReason: text("admin_ban_reason"),
   deviceId: text("device_id"),
   deviceFingerprint: jsonb("device_fingerprint"),
   isPrimaryAccount: boolean("is_primary_account").default(true),
