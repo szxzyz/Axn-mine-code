@@ -186,6 +186,8 @@ import { showNotification } from "@/components/AppNotification";
 function App() {
   const [isBanned, setIsBanned] = useState(false);
   const [banReason, setBanReason] = useState<string>();
+  const [banType, setBanType] = useState<string>();
+  const [adminBanReason, setAdminBanReason] = useState<string>();
   const [isCountryBlocked, setIsCountryBlocked] = useState(false);
   const [userCountryCode, setUserCountryCode] = useState<string | null>(null);
   const [telegramId, setTelegramId] = useState<string | null>(null);
@@ -210,6 +212,9 @@ function App() {
       if (data.success) {
         if (data.banned) {
           setIsBanned(true);
+          setBanType(data.banType);
+          setAdminBanReason(data.adminBanReason);
+          setBanReason(data.reason);
           return;
         }
         setIsChannelVerified(data.isVerified);
@@ -362,6 +367,8 @@ function App() {
           if (data.banned) {
             setIsBanned(true);
             setBanReason(data.reason);
+            setBanType(data.banType);
+            setAdminBanReason(data.adminBanReason);
           } else if (userTelegramId) {
             setTelegramId(userTelegramId);
           }
@@ -376,7 +383,7 @@ function App() {
   }, [isDevMode, isCheckingCountry, isCountryBlocked]);
 
   if (isBanned) {
-    return <BanScreen reason={banReason} />;
+    return <BanScreen reason={banReason} banType={banType} adminBanReason={adminBanReason} />;
   }
 
   if (isCheckingCountry || isAuthenticating || isCheckingMembership) {
