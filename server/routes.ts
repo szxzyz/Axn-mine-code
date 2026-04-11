@@ -1118,6 +1118,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           success: true,
           banned: true,
           reason: user.bannedReason,
+          banType: (user as any).banType || 'system',
+          adminBanReason: (user as any).adminBanReason || null,
           isVerified: true // Don't show join screen if banned
         });
       }
@@ -4201,19 +4203,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin ban/unban user endpoint (by body)
   app.post('/api/admin/users/ban', authenticateAdmin, async (req: any, res) => {
     try {
-      const { userId, banned, reason } = req.body;
+      const { userId, banned, reason, banType, adminBanReason } = req.body;
       const targetId = userId || req.body.id;
       
       if (!targetId) {
         return res.status(400).json({ success: false, message: "User ID is required" });
       }
       
-      console.log(`🔨 Admin Action (Ban): user=${targetId}, status=${banned}, reason=${reason}`);
+      console.log(`🔨 Admin Action (Ban): user=${targetId}, status=${banned}, reason=${reason}, banType=${banType}`);
 
       // Get admin user ID for logging
       const adminUserId = req.user?.telegramUser?.id?.toString() || 'admin';
       
-      await storage.updateUserBanStatus(targetId, banned, reason, adminUserId);
+      await storage.updateUserBanStatus(targetId, banned, reason, adminUserId, banType || 'admin', adminBanReason);
       
       res.json({ 
         success: true,

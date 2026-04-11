@@ -701,6 +701,15 @@ export async function ensureDatabaseSchema(): Promise<void> {
     // Create index for blocked countries
     await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_blocked_countries_code ON blocked_countries(country_code)`);
 
+    // Add ban type columns to users table if missing
+    try {
+      await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_type VARCHAR(20) DEFAULT 'system'`);
+      await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS admin_ban_reason TEXT`);
+      console.log('✅ [MIGRATION] ban_type and admin_ban_reason columns ensured on users table');
+    } catch (error) {
+      console.log('ℹ️ [MIGRATION] ban_type/admin_ban_reason columns already exist or could not be added');
+    }
+
     // Create indexes for performance
     await db.execute(sql`CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON sessions(expire)`);
     await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_users_telegram_id ON users(telegram_id)`);

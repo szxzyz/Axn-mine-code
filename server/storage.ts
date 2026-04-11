@@ -115,7 +115,7 @@ export interface IStorage {
   
   // Admin operations
   getAllUsers(): Promise<User[]>;
-  updateUserBanStatus(userId: string, banned: boolean): Promise<void>;
+  updateUserBanStatus(userId: string, banned: boolean, reason?: string, adminId?: string, banType?: string, adminBanReason?: string): Promise<void>;
   
   // Telegram user operations
   getUserByTelegramId(telegramId: string): Promise<User | undefined>;
@@ -1371,12 +1371,15 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(users.createdAt));
   }
 
-  async updateUserBanStatus(userId: string, banned: boolean, reason?: string, adminId?: string): Promise<void> {
+  async updateUserBanStatus(userId: string, banned: boolean, reason?: string, adminId?: string, banType?: string, adminBanReason?: string): Promise<void> {
     await db
       .update(users)
       .set({
         banned,
         bannedReason: reason || null,
+        banType: banned ? (banType || 'system') : null,
+        adminBanReason: banned ? (adminBanReason || null) : null,
+        bannedAt: banned ? new Date() : null,
         updatedAt: new Date(),
       })
       .where(eq(users.id, userId));
