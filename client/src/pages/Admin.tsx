@@ -396,7 +396,12 @@ function UserProfilePanel({ user: init, onClose }: { user: any; onClose: () => v
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [banning, setBanning] = useState(false);
-  const [banReason, setBanReason] = useState("");
+  const [selectedBanReason, setSelectedBanReason] = useState<string>("");
+
+  const ADMIN_BAN_REASONS = [
+    "Inactive User",
+    "Self Referral / Fraud Activity",
+  ];
 
   const { data: userData } = useQuery({
     queryKey: ["/api/admin/user-withdrawals", init.id],
@@ -404,12 +409,18 @@ function UserProfilePanel({ user: init, onClose }: { user: any; onClose: () => v
   });
 
   const handleBan = async () => {
+    if (!init.banned && !selectedBanReason) {
+      toast({ title: "Please select a ban reason", variant: "destructive" });
+      return;
+    }
     setBanning(true);
     try {
       const r = await apiRequest("POST", "/api/admin/users/ban", {
         userId: init.id,
         banned: !init.banned,
-        reason: banReason || (init.banned ? "Unbanned" : "Banned by admin"),
+        reason: init.banned ? "Unbanned by admin" : selectedBanReason,
+        banType: init.banned ? "system" : "admin",
+        adminBanReason: init.banned ? null : selectedBanReason,
       });
       const data = await r.json();
       if (data.success) {
@@ -448,9 +459,9 @@ function UserProfilePanel({ user: init, onClose }: { user: any; onClose: () => v
 
   return (
     <div className="space-y-3 max-h-[65vh] overflow-y-auto">
-      {u.banned && u.bannedReason && (
+      {u.banned && (u.adminBanReason || u.bannedReason) && (
         <div className="bg-red-900/20 border border-red-600/30 rounded-lg p-2 text-xs text-red-300">
-          Ban reason: {u.bannedReason}
+          Ban reason: {u.adminBanReason || u.bannedReason}
         </div>
       )}
       <div className="space-y-1">
@@ -464,18 +475,30 @@ function UserProfilePanel({ user: init, onClose }: { user: any; onClose: () => v
         ))}
       </div>
       {!u.banned && (
-        <Input
-          placeholder="Ban reason (optional)"
-          value={banReason}
-          onChange={e => setBanReason(e.target.value)}
-          className="h-7 text-xs bg-[#0a0a0a] border-white/10"
-        />
+        <div className="space-y-1.5">
+          <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">Ban Reason (required)</p>
+          <div className="space-y-1">
+            {ADMIN_BAN_REASONS.map((reason) => (
+              <button
+                key={reason}
+                onClick={() => setSelectedBanReason(reason)}
+                className={`w-full text-left px-3 py-2 rounded-lg text-xs border transition-all ${
+                  selectedBanReason === reason
+                    ? "bg-red-700/30 border-red-600/60 text-red-300"
+                    : "bg-[#0a0a0a] border-white/10 text-gray-400 hover:border-white/20"
+                }`}
+              >
+                {reason}
+              </button>
+            ))}
+          </div>
+        </div>
       )}
       <Button
         size="sm"
         className={`w-full h-8 text-xs ${u.banned ? "bg-green-700 hover:bg-green-600" : "bg-red-700 hover:bg-red-600"}`}
         onClick={handleBan}
-        disabled={banning}
+        disabled={banning || (!u.banned && !selectedBanReason)}
       >
         {banning ? "Processing..." : u.banned ? "Unban User" : "Ban User"}
       </Button>
