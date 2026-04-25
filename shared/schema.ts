@@ -114,6 +114,12 @@ export const users = pgTable("users", {
   referralMiningBoost: decimal("referral_mining_boost", { precision: 20, scale: 8 }).default("0"), // Extra mining rate from active referrals (0.1/h per active friend)
   activePlanId: varchar("active_plan_id"),
   planExpiresAt: timestamp("plan_expires_at"),
+  // Time-based mining session fields
+  miningMinutesAvailable: integer("mining_minutes_available").default(30),
+  miningStartedAt: timestamp("mining_started_at"),
+  miningEndsAt: timestamp("mining_ends_at"),
+  miningLastTickAt: timestamp("mining_last_tick_at"),
+  dailyEarningsDate: timestamp("daily_earnings_date"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
