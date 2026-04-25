@@ -655,58 +655,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/mining/state", authenticateTelegram, async (req: any, res) => {
-    try {
-      const user = req.user?.user;
-      if (!user) return res.status(401).json({ message: "Not authenticated" });
-
-      const now = new Date();
-      const lastClaim = new Date(user.lastMiningClaim || user.createdAt);
-      
-      // Get all active boosts
-      const boosts = await storage.getMiningBoosts(user.id);
-      
-      // Calculate total mining rate
-      const baseRate = 0.036 / 3600; // Base: 0.036 / hour
-      const section1Boost = parseFloat(user.adSection1Boost || "0") / 3600;
-      const section2Boost = parseFloat(user.adSection2Boost || "0") / 3600;
-      // Referral boost is stored as per-hour value (0.1/h per active referral)
-      const referralBoostHourly = parseFloat(user.referralMiningBoost || "0");
-      const referralBoostPerSec = referralBoostHourly / 3600;
-      
-      let totalRate = baseRate + section1Boost + section2Boost + referralBoostPerSec;
-      boosts.forEach(boost => {
-        totalRate += parseFloat(boost.miningRate);
-      });
-
-      // Calculate earned amount since last claim
-      const secondsPassed = Math.floor((now.getTime() - lastClaim.getTime()) / 1000);
-      const minedAmount = (secondsPassed * totalRate).toFixed(5);
-
-      res.json({
-        currentMining: minedAmount,
-        minedAmount: minedAmount,
-        miningRate: (totalRate * 3600).toFixed(4),
-        rawMiningRate: totalRate,
-        baseRate: (baseRate * 3600).toFixed(4),
-        section1Boost: (section1Boost * 3600).toFixed(4),
-        section2Boost: (section2Boost * 3600).toFixed(4),
-        referralBoost: referralBoostHourly.toFixed(4),
-        lastClaim: lastClaim,
-        boosts: boosts.map((b: any) => ({
-          id: b.id,
-          planId: b.planId,
-          miningRate: (parseFloat(b.miningRate) * 3600).toFixed(4),
-          startTime: b.startTime,
-          expiresAt: b.expiresAt,
-          remainingTime: Math.max(0, Math.floor((new Date(b.expiresAt).getTime() - now.getTime()) / 1000))
-        }))
-      });
-    } catch (error) {
-      console.error("Error getting mining state:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
+  // Note: /api/mining/state is registered later in this file using storage.getMiningState
+  // (the new time-based session implementation). The legacy inline handler that previously
+  // lived here has been removed in favor of the unified storage-backed endpoint.
 
   app.get("/api/deposits", authenticateTelegram, async (req: any, res) => {
     try {
@@ -1208,27 +1159,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/mining/claim", authenticateTelegram, async (req: any, res) => {
+  // Start a time-based mining session. Body: { minutes?: number }
+  app.post("/api/mining/start", authenticateTelegram, async (req: any, res) => {
     try {
       const user = req.user?.user;
       if (!user) return res.status(401).json({ message: "Not authenticated" });
-      
-      const miningState = await storage.getMiningState(user.id);
-      const minClaimAmount = 1;
-      
-      if (parseFloat(miningState.currentMining) < minClaimAmount) {
-        return res.status(400).json({ 
-          success: false, 
-          message: `Minimum claim amount is ${minClaimAmount} SAT. Keep mining to reach the threshold.` 
-        });
-      }
-
-      const result = await storage.claimMining(user.id);
-      res.json(result);
+      const requestedMinutes = req.body?.minutes ? Number(req.body.minutes) : undefined;
+      const result = await storage.startMining(user.id, requestedMinutes);
+      if (!result.success) return res.status(400).json(result);
+      const state = await storage.getMiningState(user.id);
+      res.json({ ...result, state });
     } catch (error) {
-      console.error("Mining claim error:", error);
-      res.status(500).json({ message: "Internal server error" });
+      console.error("Mining start error:", error);
+      res.status(500).json({ success: false, message: "Internal server error" });
     }
+  });
+
+  // Grant mining minutes (e.g. for watching an ad). Body: { minutes?: number, source?: string }
+  app.post("/api/mining/grant-minutes", authenticateTelegram, async (req: any, res) => {
+    try {
+      const user = req.user?.user;
+      if (!user) return res.status(401).json({ message: "Not authenticated" });
+      const minutes = Math.max(1, Math.min(60, Number(req.body?.minutes) || 5));
+      const result = await storage.addMiningMinutes(user.id, minutes);
+      res.json({ success: true, minutesAdded: minutes, ...result });
+    } catch (error) {
+      console.error("Grant minutes error:", error);
+      res.status(500).json({ success: false, message: "Internal server error" });
+    }
+  });
+
+  // Backwards-compat: claim endpoint is removed in the new system, but we keep a stub
+  // returning a clear message so older clients don't crash.
+  app.post("/api/mining/claim", authenticateTelegram, async (_req: any, res) => {
+    return res.status(410).json({
+      success: false,
+      message: "Claim is no longer used. Mining now credits your balance live while running."
+    });
   });
 
   // Debug route to check database columns
